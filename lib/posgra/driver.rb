@@ -32,12 +32,13 @@ class Posgra::Driver
         LEFT JOIN pg_user ON pg_user.usesysid = ANY(pg_group.grolist)
     SQL
 
-    user_by_group = Hash.new {|hash, key| hash[key] = [] }
+    user_by_group = {}
 
     rs.each do |row|
       group = row['groname']
       user = row['usename']
-      user_by_group[group] << user
+      user_by_group[group] ||= []
+      user_by_group[group] << user if user
     end
 
     user_by_group
