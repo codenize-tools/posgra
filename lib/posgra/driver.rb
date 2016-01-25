@@ -16,6 +16,33 @@ class Posgra::Driver
     @options = options
   end
 
+  def list_users
+    # TODO: 型の変換とカラムの絞り込みを検討
+    rs = @client.exec('SELECT * FROM pg_user')
+    rs.to_a
+  end
+
+  def list_groups
+    rs = @client.exec <<-SQL
+      SELECT
+        pg_group.groname,
+        pg_user.usename
+      FROM
+        pg_group
+        LEFT JOIN pg_user ON pg_user.usesysid = ANY(pg_group.grolist)
+    SQL
+
+    user_by_group = Hash.new {|hash, key| hash[key] = [] }
+
+    rs.each do |row|
+      group = row['groname']
+      user = row['usename']
+      user_by_group[group] << user
+    end
+
+    user_by_group
+  end
+
   def list_grants
     rs = @client.exec <<-SQL
       SELECT
