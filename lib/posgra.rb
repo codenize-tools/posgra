@@ -1,5 +1,6 @@
-require "posgra/version"
+require 'pg'
 
-module Posgra
-  # Your code goes here...
-end
+module Posgra; end
+
+require 'posgra/version'
+require 'posgra/driver'
