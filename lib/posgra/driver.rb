@@ -1,6 +1,16 @@
 class Posgra::Driver
   DEFAULT_ACL = '{%s=arwdDxt/%s}'
 
+  PRIVILEGE_TYPES = {
+    'a' => 'INSERT',
+    'r' => 'SELECT',
+    'w' => 'UPDATE',
+    'd' => 'DELETE',
+    'D' => 'TRUNCATE',
+    'x' => 'REFERENCES',
+    't' => 'TRIGGER',
+  }
+
   def initialize(client, options = {})
     @client = client
     @options = options
@@ -34,14 +44,26 @@ class Posgra::Driver
     aclitems = aclitems[1..-2].split(',')
 
     aclitems.map do |aclitem|
-      grantee, privilege_types_grantor = aclitem.split('=', 2)
-      privilege_types, grantor = privilege_types_grantor.split('/', 2)
+      grantee, privileges_grantor = aclitem.split('=', 2)
+      privileges, grantor = privileges_grantor.split('/', 2)
 
       {
-        :grantee => grantee,
-        :privilege_types => privilege_types,
-        :grantor => grantor,
+        'grantee' => grantee,
+        'privileges' => expand_privileges(privileges),
+        'grantor' => grantor,
       }
     end
+  end
+
+  def expand_privileges(privileges)
+    privileges.scan(/([a-z])(\*)?/i).map {|privilege_type,is_grantable|
+      privilege_type = PRIVILEGE_TYPES[privilege_type]
+      # TODO: 不明なタイプの場合は警告を出す
+
+      {
+        'privilege_type' => privilege_type,
+        'is_grantable' => !!is_grantable,
+      }
+    }.select {|h| h['privilege_type'] }
   end
 end
