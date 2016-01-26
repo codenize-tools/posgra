@@ -16,7 +16,7 @@ class Posgra::Driver
     @options = options
   end
 
-  def list_users
+  def describe_users
     rs = @client.exec('SELECT * FROM pg_user')
 
     options_by_user = {}
@@ -29,7 +29,7 @@ class Posgra::Driver
     options_by_user
   end
 
-  def list_groups
+  def describe_groups
     rs = @client.exec <<-SQL
       SELECT
         pg_group.groname,
@@ -51,7 +51,7 @@ class Posgra::Driver
     users_by_group
   end
 
-  def list_grants
+  def describe_grants
     rs = @client.exec <<-SQL
       SELECT
         pg_class.relname,
