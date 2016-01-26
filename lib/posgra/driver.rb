@@ -12,6 +12,10 @@ class Posgra::Driver
   }
 
   def initialize(client, options = {})
+    unless client.type_map_for_results.is_a?(PG::BasicTypeMapForResults)
+      raise 'PG::Connection#type_map_for_results must be PG::BasicTypeMapForResults'
+    end
+
     @client = client
     @options = options
   end
@@ -23,7 +27,7 @@ class Posgra::Driver
 
     rs.each do |row|
       user = row['usename']
-      options_by_user[user] = row.select {|_, v| v == 't' }.keys
+      options_by_user[user] = row.select {|_, v| v == true }.keys
     end
 
     options_by_user
