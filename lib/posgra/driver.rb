@@ -17,9 +17,16 @@ class Posgra::Driver
   end
 
   def list_users
-    # TODO: 型の変換とカラムの絞り込みを検討
     rs = @client.exec('SELECT * FROM pg_user')
-    rs.to_a
+
+    options_by_user = {}
+
+    rs.each do |row|
+      user = row['usename']
+      options_by_user[user] = row.select {|_, v| v == 't' }.keys
+    end
+
+    options_by_user
   end
 
   def list_groups
@@ -32,16 +39,16 @@ class Posgra::Driver
         LEFT JOIN pg_user ON pg_user.usesysid = ANY(pg_group.grolist)
     SQL
 
-    user_by_group = {}
+    users_by_group = {}
 
     rs.each do |row|
       group = row['groname']
       user = row['usename']
-      user_by_group[group] ||= []
-      user_by_group[group] << user if user
+      users_by_group[group] ||= []
+      users_by_group[group] << user if user
     end
 
-    user_by_group
+    users_by_group
   end
 
   def list_grants
