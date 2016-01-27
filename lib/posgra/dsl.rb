@@ -4,6 +4,6 @@ class Posgra::DSL
   end
 
   def self.parse(dsl, path, options = {})
-    #Posgra::DSL::Context.eval(dsl, path, options).result
+    Posgra::DSL::Context.eval(dsl, path, options).result
   end
 end

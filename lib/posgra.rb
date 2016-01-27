@@ -1,3 +1,4 @@
+require 'hashie'
 require 'logger'
 require 'pg'
 require 'singleton'
@@ -7,10 +8,13 @@ module Posgra; end
 
 require 'posgra/ext/string_ext'
 require 'posgra/logger'
+require 'posgra/template'
 require 'posgra/utils'
 require 'posgra/client'
 require 'posgra/driver'
 require 'posgra/dsl'
+require 'posgra/dsl/context'
+require 'posgra/dsl/context/group'
 require 'posgra/dsl/converter'
 require 'posgra/exporter'
 require 'posgra/version'
