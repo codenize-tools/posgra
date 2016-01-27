@@ -1,4 +1,6 @@
 class Posgra::Driver
+  include Posgra::Logger::Helper
+
   DEFAULT_ACL = '{%s=arwdDxt/%s}'
 
   PRIVILEGE_TYPES = {
@@ -12,8 +14,8 @@ class Posgra::Driver
   }
 
   def initialize(client, options = {})
-    unless client.type_map_for_results.is_a?(PG::BasicTypeMapForResults)
-      raise 'PG::Connection#type_map_for_results must be PG::BasicTypeMapForResults'
+    unless client.type_map_for_results.is_a?(PG::TypeMapAllStrings)
+      raise 'PG::Connection#type_map_for_results must be PG::TypeMapAllStrings'
     end
 
     @client = client
@@ -26,8 +28,8 @@ class Posgra::Driver
     options_by_user = {}
 
     rs.each do |row|
-      user = row['usename']
-      options_by_user[user] = row.select {|_, v| v == true }.keys
+      user = row.fetch('usename')
+      options_by_user[user] = row.select {|_, v| v == 't' }.keys
     end
 
     options_by_user
@@ -46,8 +48,8 @@ class Posgra::Driver
     users_by_group = {}
 
     rs.each do |row|
-      group = row['groname']
-      user = row['usename']
+      group = row.fetch('groname')
+      user = row.fetch('usename')
       users_by_group[group] ||= []
       users_by_group[group] << user if user
     end
@@ -68,17 +70,31 @@ class Posgra::Driver
         INNER JOIN pg_user ON pg_class.relowner = pg_user.usesysid
     SQL
 
-    rs.map do |row|
-      relacl = row.delete('relacl')
-      usename = row.delete('usename')
-      row['relacl'] = parse_aclitem(relacl, usename)
-      row
+    grants_by_role = {}
+
+    rs.each do |row|
+      relname = row.fetch('relname')
+      nspname = row.fetch('nspname')
+      relacl = row.fetch('relacl')
+      usename = row.fetch('usename')
+
+
+      parse_aclitems(relacl, usename).each do |aclitem|
+        role = aclitem.fetch('grantee')
+        privs = aclitem.fetch('privileges')
+
+        grants_by_role[role] ||= {}
+        grants_by_role[role][nspname] ||= {}
+        grants_by_role[role][nspname][relname] = privs
+      end
     end
+
+    grants_by_role
   end
 
   private
 
-  def parse_aclitem(aclitems, owner)
+  def parse_aclitems(aclitems, owner)
     aclitems ||= DEFAULT_ACL % [owner, owner]
     aclitems = aclitems[1..-2].split(',')
 
@@ -95,14 +111,22 @@ class Posgra::Driver
   end
 
   def expand_privileges(privileges)
-    privileges.scan(/([a-z])(\*)?/i).map {|privilege_type,is_grantable|
-      privilege_type = PRIVILEGE_TYPES[privilege_type]
-      # TODO: 不明なタイプの場合は警告を出す
+    privilege_type_grantables = []
 
-      {
+    privileges.scan(/([a-z])(\*)?/i).each do |privilege_type_char,is_grantable|
+      privilege_type = PRIVILEGE_TYPES[privilege_type_char]
+
+      unless privilege_type
+        log(:warn, "unknown privilege type: #{privilege_type_char}", :color => :yellow)
+        next
+      end
+
+      privilege_type_grantables << {
         'privilege_type' => privilege_type,
         'is_grantable' => !!is_grantable,
       }
-    }.select {|h| h['privilege_type'] }
+    end
+
+    privilege_type_grantables
   end
 end
