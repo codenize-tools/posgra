@@ -8,11 +8,13 @@ class Posgra::DSL::Context::Role::Schema::On
     @object = object
     @options = options
     @context = context.merge(:object => object)
-    @result = []
+    @result = {}
     instance_eval(&block)
   end
 
   def grant(name, options = {})
-    # TODO:
+    @result[name] = {
+      'is_grantable' => !!options[:grantable]
+    }
   end
 end
