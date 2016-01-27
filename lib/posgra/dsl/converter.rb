@@ -114,7 +114,7 @@ end
     out = "grant #{privilege_type.inspect}"
 
     if is_grantable
-      out << ", #{is_grantable}"
+      out << ", :grantable => #{is_grantable}"
     end
 
     out

@@ -12,7 +12,7 @@ class Posgra::DSL::Context::Role::Schema
     instance_eval(&block)
   end
 
-  def on(name)
-    # TODO:
+  def on(name, &block)
+    @result[name] = Posgra::DSL::Context::Role::Schema::On.new(@context, name, @options, &block).result
   end
 end
