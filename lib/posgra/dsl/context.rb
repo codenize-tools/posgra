@@ -13,7 +13,10 @@ class Posgra::DSL::Context
   def initialize(path, options = {}, &block)
     @path = path
     @options = options
-    @result = {}
+    @result = {
+      :users_by_group => {},
+      :grants_by_role => {},
+    }
 
     @context = Hashie::Mash.new(
       :path => path,
@@ -43,9 +46,10 @@ class Posgra::DSL::Context
   end
 
   def group(name, &block)
-    @result[:user_by_group] = Posgra::DSL::Context::Group.new(@context, name, @options, &block).result
+    @result[:users_by_group][name] = Posgra::DSL::Context::Group.new(@context, name, @options, &block).result
   end
 
-  def role(name)
+  def role(name, &block)
+    @result[:grants_by_role][name] = Posgra::DSL::Context::Role.new(@context, name, @options, &block).result
   end
 end
