@@ -103,14 +103,13 @@ end
   end
 
   def output_grants(grants)
-    grants.sort_by {|g| g.to_s }.map {|grant|
-      output_grant(grant).strip
+    grants.sort_by {|g| g.to_s }.map {|privilege_type, options|
+      output_grant(privilege_type, options).strip
     }.join("\n      ")
   end
 
-  def output_grant(grant)
-    privilege_type = grant.fetch('privilege_type')
-    is_grantable = grant.fetch('is_grantable')
+  def output_grant(privilege_type, options)
+    is_grantable = options.fetch('is_grantable')
     out = "grant #{privilege_type.inspect}"
 
     if is_grantable

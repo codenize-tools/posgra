@@ -115,7 +115,7 @@ class Posgra::Driver
   end
 
   def expand_privileges(privileges)
-    privilege_type_grantables = []
+    options_by_privilege = {}
 
     privileges.scan(/([a-z])(\*)?/i).each do |privilege_type_char,is_grantable|
       privilege_type = PRIVILEGE_TYPES[privilege_type_char]
@@ -125,12 +125,11 @@ class Posgra::Driver
         next
       end
 
-      privilege_type_grantables << {
-        'privilege_type' => privilege_type,
+      options_by_privilege[privilege_type] = {
         'is_grantable' => !!is_grantable,
       }
     end
 
-    privilege_type_grantables
+    options_by_privilege
   end
 end
