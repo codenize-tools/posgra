@@ -7,6 +7,7 @@ module Posgra; end
 
 require 'posgra/ext/string_ext'
 require 'posgra/logger'
+require 'posgra/utils'
 require 'posgra/client'
 require 'posgra/driver'
 require 'posgra/dsl'

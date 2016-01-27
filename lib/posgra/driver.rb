@@ -1,5 +1,6 @@
 class Posgra::Driver
   include Posgra::Logger::Helper
+  include Posgra::Utils::Helper
 
   DEFAULT_ACL = '{%s=arwdDxt/%s}'
 
@@ -29,6 +30,7 @@ class Posgra::Driver
 
     rs.each do |row|
       user = row.fetch('usename')
+      next unless matched?(user, @options[:include_role], @options[:exclude_role])
       options_by_user[user] = row.select {|_, v| v == 't' }.keys
     end
 
@@ -50,6 +52,7 @@ class Posgra::Driver
     rs.each do |row|
       group = row.fetch('groname')
       user = row.fetch('usename')
+      next unless [group, user].any? {|i| matched?(i, @options[:include_role], @options[:exclude_role]) }
       users_by_group[group] ||= []
       users_by_group[group] << user if user
     end
@@ -78,11 +81,12 @@ class Posgra::Driver
       relacl = row.fetch('relacl')
       usename = row.fetch('usename')
 
+      next unless matched?(nspname, @options[:include_schema], @options[:exclude_schema])
 
       parse_aclitems(relacl, usename).each do |aclitem|
         role = aclitem.fetch('grantee')
         privs = aclitem.fetch('privileges')
-
+        next unless matched?(role, @options[:include_role], @options[:exclude_role])
         grants_by_role[role] ||= {}
         grants_by_role[role][nspname] ||= {}
         grants_by_role[role][nspname][relname] = privs

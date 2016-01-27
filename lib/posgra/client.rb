@@ -1,8 +1,12 @@
 class Posgra::Client
   def initialize(options = {})
+    options = {
+      :exclude_schema => /\A(?:pg_.*|information_schema)\z/,
+      :exclude_role => /\A\z/,
+      #:identifier => ...
+    }.merge(options)
+
     @options = options
-    # TODO:
-    #@options[:identifier] ||= ...
     client = connect(options)
     @driver = Posgra::Driver.new(client, options)
   end

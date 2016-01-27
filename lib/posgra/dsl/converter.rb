@@ -31,7 +31,7 @@ class Posgra::DSL::Converter
       users = "# no users"
     else
       users = users.sort.map {|user|
-        "user #{users.inspect}"
+        "user #{user.inspect}"
       }.join("\n  ")
     end
 
