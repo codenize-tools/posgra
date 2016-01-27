@@ -38,7 +38,72 @@ class Posgra::Client
     end
   end
 
+  def apply(file, options = {})
+    options = @options.merge(options)
+    walk(file, options)
+  end
+
   private
+
+  def walk(file, options)
+    expected = load_file(file, options)
+    expected[:users] = expected_users(expected[:users_by_group], expected[:grants_by_role])
+    actual = Posgra::Exporter.export(@driver, options)
+
+    updated = walk_users(expected.fetch(:users), actual.fetch(:users))
+    updated = walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group)) || updated
+    walk_roles(expected.fetch(:grants_by_role), actual.fetch(:grants_by_role)) || updated
+  end
+
+  def walk_users(expected, actual)
+    (expected - actual).each do |user|
+      # TODO: create user
+    end
+
+    (actual - expected).each do |user|
+      # TODO: drop user
+    end
+  end
+
+  def walk_groups(expected, actual)
+    expected.each do |expected_group, expected_users|
+      actual_users = actual.delete(expected_group)
+
+      if actual_users
+        # TODO: update group
+      else
+        # TODO: create group
+      end
+    end
+
+    actual.each do |actual_group, actual_users|
+      # TODO: drop group
+    end
+  end
+
+  def walk_roles(expected, actual)
+    # TODO:
+  end
+
+  def load_file(file, options)
+    # TODO: パーサにフィルタを追加する
+    if file.kind_of?(String)
+      open(file) do |f|
+        Posgra::DSL.parse(f.read, file, options)
+      end
+    elsif file.respond_to?(:read)
+      Posgra::DSL.parse(file.read, file.path, options)
+    else
+      raise TypeError, "can't convert #{file} into File"
+    end
+  end
+
+  def expected_users(users_by_group, grants_by_role)
+    groups = users_by_group.keys
+    users = users_by_group.values.flatten
+    roles_without_group = grants_by_role.keys - groups
+    (users + roles_without_group).uniq
+  end
 
   def connect(options)
     connect_options = {}
