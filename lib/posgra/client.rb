@@ -69,11 +69,12 @@ class Posgra::Client
     expected.each do |expected_group, expected_users|
       actual_users = actual.delete(expected_group)
 
-      if actual_users
-        # TODO: update group
-      else
+      unless actual_users
         # TODO: create group
+        actual_users = []
       end
+
+      # TODO: update group
     end
 
     actual.each do |actual_group, actual_users|
