@@ -11,6 +11,8 @@ if ENV['TRAVIS']
 end
 
 require 'posgra'
+require 'tempfile'
+require 'unindent'
 
 RSpec.configure do |config|
   config.before(:all) do
@@ -22,7 +24,7 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
-    #drop_test_db
+    drop_test_db
   end
 end
 
@@ -30,6 +32,92 @@ module SpecHelper
   DBUSER = ENV['POSGRA_TEST_USER'] || ENV['USER']
   DBNAME = 'posgra_test'
   DEFAULT_DBNAME = 'postgres'
+
+  def apply_roles
+    tempfile(yield) do |f|
+      run_client do |client|
+        client.apply(f.path)
+      end
+    end
+  end
+
+  def export_roles
+    run_client do |client|
+      client.export_roles
+    end
+  end
+
+  def apply_roles
+    tempfile(yield) do |f|
+      run_client do |client|
+        client.apply_roles(f.path)
+      end
+    end
+  end
+
+  def export_roles
+    run_client do |client|
+      client.export_roles
+    end
+  end
+
+  def apply_grants
+    tempfile(yield) do |f|
+      run_client do |client|
+        client.apply_grants(f.path)
+      end
+    end
+  end
+
+  def export_grants
+    run_client do |client|
+      client.export_grants
+    end
+  end
+
+  def run_client(options = {})
+    options = {
+      user: DBUSER,
+      dbname: DBNAME,
+      logger: Logger.new('/dev/null'),
+      include_role: /\A(?:alice|bob|staff|engineer)\z/,
+      exclude_role: /\A#{DBUSER}\z/,
+      identifier: Posgra::Identifier::Auto.new('/dev/null')
+    }.merge(options)
+
+    if ENV['DEBUG']
+      logger = Posgra::Logger.instance
+      logger.set_debug(true)
+
+      options.update(
+        debug: true,
+        logger: logger
+      )
+    end
+
+    client = Posgra::Client.new(options)
+    retval = nil
+
+    begin
+      retval = yield(client)
+    ensure
+      client.close
+    end
+
+    retval
+  end
+
+  def tempfile(content, options = {})
+    basename = "#{File.basename __FILE__}.#{$$}"
+    basename = [basename, options[:ext]] if options[:ext]
+
+    Tempfile.open(basename) do |f|
+      f.puts(content)
+      f.flush
+      f.rewind
+      yield(f)
+    end
+  end
 
   def pg(dbname = DBNAME)
     begin
@@ -97,6 +185,16 @@ module SpecHelper
   end
 
   def drop_test_db
-    pg(DEFAULT_DBNAME) {|conn| conn.exec "DROP DATABASE IF EXISTS #{DBNAME}" }
+    pg(DEFAULT_DBNAME) do |conn|
+      conn.exec "SET client_min_messages = WARNING"
+      conn.exec "DROP DATABASE IF EXISTS #{DBNAME}"
+
+      conn.exec <<-SQL
+        DROP ROLE IF EXISTS alice;
+        DROP ROLE IF EXISTS bob;
+        DROP ROLE IF EXISTS staff;
+        DROP ROLE IF EXISTS engineer;
+      SQL
+    end
   end
 end

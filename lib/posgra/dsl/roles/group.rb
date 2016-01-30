@@ -10,7 +10,7 @@ class Posgra::DSL::Roles::Group
     @options = options
     @context = context.merge(:group => group)
     @result = []
-    instance_eval(&block)
+    instance_eval(&block) if block
   end
 
   def user(name)

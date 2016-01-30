@@ -22,8 +22,8 @@ class Posgra::Client
     end
 
     @options = options
-    client = connect(options)
-    @driver = Posgra::Driver.new(client, options)
+    @client = connect(options)
+    @driver = Posgra::Driver.new(@client, options)
   end
 
   def export_roles(options = {})
@@ -58,6 +58,10 @@ class Posgra::Client
   def apply_grants(file, options = {})
     options = @options.merge(options)
     walk_for_grants(file, options)
+  end
+
+  def close
+    @client.close
   end
 
   private
