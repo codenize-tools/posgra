@@ -12,6 +12,7 @@ class Posgra::Driver
     'D' => 'TRUNCATE',
     'x' => 'REFERENCES',
     't' => 'TRIGGER',
+    'U' => 'USAGE',
   }
 
   def initialize(client, options = {})
@@ -335,12 +336,12 @@ class Posgra::Driver
 
   def expand_privileges(privileges)
     options_by_privilege = {}
-
+p
     privileges.scan(/([a-z])(\*)?/i).each do |privilege_type_char,is_grantable|
       privilege_type = PRIVILEGE_TYPES[privilege_type_char]
 
       unless privilege_type
-        log(:warn, "unknown privilege type: #{privilege_type_char}", :color => :yellow)
+        log(:warn, "Unknown privilege type: #{privilege_type_char}", :color => :yellow)
         next
       end
 

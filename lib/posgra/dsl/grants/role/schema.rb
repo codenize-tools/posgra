@@ -12,9 +12,18 @@ class Posgra::DSL::Grants::Role::Schema
     instance_eval(&block)
   end
 
-  def on(name, &block)
+  def on(name, options = {}, &block)
     unless name.is_a?(Regexp)
       name = name.to_s
+    end
+
+    if options[:expired]
+      expired = Time.parse(options[:expired])
+
+      if Time.new >= expired
+        log(:warn, "Privilege for `#{name}` has expired", :color => :yellow)
+        return
+      end
     end
 
     @result[name] = Posgra::DSL::Grants::Role::Schema::On.new(@context, name, @options, &block).result

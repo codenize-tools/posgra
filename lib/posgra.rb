@@ -3,6 +3,7 @@ require 'logger'
 require 'pg'
 require 'singleton'
 require 'term/ansicolor'
+require 'time'
 require 'thor'
 
 module Posgra; end

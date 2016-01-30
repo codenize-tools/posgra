@@ -87,7 +87,7 @@ role "bob" do
       grant "TRUNCATE"
       grant "UPDATE"
     end
-    on "microposts_id_seq" do
+    on "microposts_id_seq", expired: '2014/10/07' do
       grant "SELECT"
       grant "UPDATE"
     end

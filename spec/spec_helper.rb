@@ -1,5 +1,7 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
+ENV['TZ'] = 'UTC'
+
 if ENV['TRAVIS']
   require 'simplecov'
   require 'coveralls'
@@ -13,6 +15,7 @@ end
 require 'posgra'
 require 'tempfile'
 require 'unindent'
+require 'timecop'
 
 RSpec.configure do |config|
   config.before(:all) do
@@ -33,44 +36,30 @@ module SpecHelper
   DBNAME = 'posgra_test'
   DEFAULT_DBNAME = 'postgres'
 
-  def apply_roles
+  def apply_roles(options = {})
     tempfile(yield) do |f|
-      run_client do |client|
-        client.apply(f.path)
-      end
-    end
-  end
-
-  def export_roles
-    run_client do |client|
-      client.export_roles
-    end
-  end
-
-  def apply_roles
-    tempfile(yield) do |f|
-      run_client do |client|
+      run_client(options) do |client|
         client.apply_roles(f.path)
       end
     end
   end
 
-  def export_roles
-    run_client do |client|
+  def export_roles(options = {})
+    run_client(options) do |client|
       client.export_roles
     end
   end
 
-  def apply_grants
+  def apply_grants(options = {})
     tempfile(yield) do |f|
-      run_client do |client|
+      run_client(options) do |client|
         client.apply_grants(f.path)
       end
     end
   end
 
-  def export_grants
-    run_client do |client|
+  def export_grants(options = {})
+    run_client(options) do |client|
       client.export_grants
     end
   end
