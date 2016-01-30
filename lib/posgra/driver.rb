@@ -21,6 +21,104 @@ class Posgra::Driver
 
     @client = client
     @options = options
+    @identifier = options.fetch(:identifier)
+  end
+
+  def create_user(user)
+    updated = false
+
+    password =  @identifier.identify(user)
+    sql = "CREATE USER #{@client.escape_identifier(user)} PASSWORD #{@client.escape_literal(password)}"
+    log(:info, sql, :color => :cyan)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def drop_user(user)
+    updated = false
+
+    sql = "DROP USER #{@client.escape_identifier(user)}"
+    log(:info, sql, :color => :red)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def create_group(group)
+    updated = false
+
+    sql = "CREATE GROUP #{@client.escape_identifier(group)}"
+    log(:info, sql, :color => :cyan)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def add_user_to_group(user, group)
+    updated = false
+
+    sql = "ALTER GROUP #{@client.escape_identifier(group)} ADD USER #{@client.escape_identifier(user)}"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def drop_user_from_group(user, group)
+    updated = false
+
+    sql = "ALTER GROUP #{@client.escape_identifier(group)} DROP USER #{@client.escape_identifier(user)}"
+    log(:info, sql, :color => :cyan)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def drop_group(group)
+    updated = false
+
+    sql = "DROP GROUP #{@client.escape_identifier(group)}"
+    log(:info, sql, :color => :red)
+
+    unless @options[:dry_run]
+      revoke_all(group)
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def revoke_all(role)
+    describe_schemas.each do |schema|
+      sql = "REVOKE ALL ON ALL TABLES IN SCHEMA #{@client.escape_identifier(schema)} FROM #{@client.escape_identifier(role)}"
+      log(:debug, sql, :color => :green)
+
+      unless @options[:dry_run]
+        @client.query(sql)
+      end
+    end
   end
 
   def describe_users
@@ -94,6 +192,19 @@ class Posgra::Driver
     end
 
     grants_by_role
+  end
+
+  def describe_schemas
+    rs = @client.exec <<-SQL
+      SELECT
+        nspname
+      FROM
+        pg_namespace
+    SQL
+
+    rs.map do |row|
+      row.fetch('nspname')
+    end
   end
 
   private

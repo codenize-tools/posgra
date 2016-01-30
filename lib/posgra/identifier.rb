@@ -1,0 +1,2 @@
+class Posgra::Identifier
+end

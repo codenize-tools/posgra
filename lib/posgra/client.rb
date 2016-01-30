@@ -3,7 +3,6 @@ class Posgra::Client
     options = {
       :exclude_schema => /\A(?:pg_.*|information_schema)\z/,
       :exclude_role => /\A\z/,
-      #:identifier => ...
     }.merge(options)
 
     @options = options
@@ -47,39 +46,64 @@ class Posgra::Client
 
   def walk(file, options)
     expected = load_file(file, options)
-    expected[:users] = expected_users(expected[:users_by_group], expected[:grants_by_role])
+    expected[:users] = build_expected_users(expected[:users_by_group], expected[:grants_by_role])
     actual = Posgra::Exporter.export(@driver, options)
 
-    updated = walk_users(expected.fetch(:users), actual.fetch(:users))
-    updated = walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group)) || updated
+    updated = pre_walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group))
+    updated = walk_users(expected.fetch(:users), actual.fetch(:users)) || updated
+    updated = walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group), expected.fetch(:users)) || updated
     walk_roles(expected.fetch(:grants_by_role), actual.fetch(:grants_by_role)) || updated
   end
 
   def walk_users(expected, actual)
+    updated = false
+
     (expected - actual).each do |user|
-      # TODO: create user
+      updated = @driver.create_user(user) || updated
     end
 
     (actual - expected).each do |user|
-      # TODO: drop user
+      updated = @driver.drop_user(user) || updated
     end
+
+    updated
   end
 
-  def walk_groups(expected, actual)
+  def pre_walk_groups(expected, actual)
+    updated = false
+
+    actual.reject {|actual_group, _|
+      expected.has_key?(actual_group)
+    }.each {|actual_group, _|
+      updated = @driver.drop_group(actual_group) || updated
+    }
+
+    updated
+  end
+
+  def walk_groups(expected, actual, expected_users)
+    updated = false
+
     expected.each do |expected_group, expected_users|
       actual_users = actual.delete(expected_group)
 
       unless actual_users
-        # TODO: create group
+        updated = @driver.create_group(expected_group) || updated
         actual_users = []
       end
 
-      # TODO: update group
+      (expected_users - actual_users).each do |user|
+        updated = @driver.add_user_to_group(user, expected_group) || updated
+      end
+
+      (actual_users - expected_users).each do |user|
+        if expected_users.include?(user)
+          updated = @driver.drop_user_from_group(user, expected_group) || updated
+        end
+      end
     end
 
-    actual.each do |actual_group, actual_users|
-      # TODO: drop group
-    end
+    updated
   end
 
   def walk_roles(expected, actual)
@@ -99,7 +123,7 @@ class Posgra::Client
     end
   end
 
-  def expected_users(users_by_group, grants_by_role)
+  def build_expected_users(users_by_group, grants_by_role)
     groups = users_by_group.keys
     users = users_by_group.values.flatten
     roles_without_group = grants_by_role.keys - groups
