@@ -11,3 +11,6 @@ script:
   - bundle exec rake
 addons:
   postgresql: "9.4"
+env:
+  global:
+    - POSGRA_TEST_USER=postgres
