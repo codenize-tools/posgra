@@ -40,7 +40,7 @@ class Posgra::Driver
   end
 
   def drop_user(user)
-    updated = revoke_all(user)
+    updated = false
 
     sql = "DROP USER #{@client.escape_identifier(user)}"
     log(:info, sql, :color => :red)
@@ -96,25 +96,14 @@ class Posgra::Driver
   end
 
   def drop_group(group)
-    updated = revoke_all(group)
+    updated = false
 
     sql = "DROP GROUP #{@client.escape_identifier(group)}"
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
-      revoke_all(group)
       @client.query(sql)
       updated = true
-    end
-
-    updated
-  end
-
-  def revoke_all(role)
-    updated = false
-
-    describe_schemas.each do |schema|
-      updated = revoke_all_on_schema(role, schema) || updated
     end
 
     updated
