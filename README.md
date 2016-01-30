@@ -94,6 +94,9 @@ role "bob" do
       grant "SELECT"
       grant "UPDATE"
     end
+    on /^user/ do
+      grant "SELECT"
+    end
   end
 end
 ```
