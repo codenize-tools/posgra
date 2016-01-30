@@ -1,2 +1,2 @@
-class Posgra::Identifier
+module Posgra::Identifier
 end

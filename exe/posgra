@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+$: << File.expand_path('../../lib', __FILE__)
+require 'posgra'
+
+debug = ARGV.any? {|i| i == '--debug' }
+
+begin
+  Posgra::CLI::App.start(ARGV)
+rescue => e
+  if debug
+    raise e
+  else
+    $stderr.puts "ERROR: #{e}".red
+  end
+end

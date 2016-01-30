@@ -1,0 +1,2 @@
+module Posgra::CLI
+end
