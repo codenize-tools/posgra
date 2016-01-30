@@ -1,4 +1,4 @@
-class Posgra::DSL::Context
+class Posgra::DSL::Roles
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
   include Posgra::Utils::Helper
@@ -9,14 +9,17 @@ class Posgra::DSL::Context
     end
   end
 
-  attr_reader :result
+  def result
+    @result.fetch(:users).uniq
+    @result
+  end
 
   def initialize(path, options = {}, &block)
     @path = path
     @options = options
     @result = {
+      :users => [],
       :users_by_group => {},
-      :grants_by_role => {},
     }
 
     @context = Hashie::Mash.new(
@@ -46,15 +49,15 @@ class Posgra::DSL::Context
     end
   end
 
-  def group(name, &block)
+  def user(name, &block)
     if matched?(name, @options[:include_role], @options[:exclude_role])
-      @result[:users_by_group][name] = Posgra::DSL::Context::Group.new(@context, name, @options, &block).result
+      @result[:users] << name
     end
   end
 
-  def role(name, &block)
+  def group(name, &block)
     if matched?(name, @options[:include_role], @options[:exclude_role])
-      @result[:grants_by_role][name] = Posgra::DSL::Context::Role.new(@context, name, @options, &block).result
+      @result[:users_by_group][name] = Posgra::DSL::Roles::Group.new(@context, name, @options, &block).result
     end
   end
 end

@@ -1,4 +1,4 @@
-class Posgra::DSL::Context::Role::Schema
+class Posgra::DSL::Grants::Role::Schema
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
 
@@ -13,6 +13,6 @@ class Posgra::DSL::Context::Role::Schema
   end
 
   def on(name, &block)
-    @result[name] = Posgra::DSL::Context::Role::Schema::On.new(@context, name, @options, &block).result
+    @result[name] = Posgra::DSL::Grants::Role::Schema::On.new(@context, name, @options, &block).result
   end
 end

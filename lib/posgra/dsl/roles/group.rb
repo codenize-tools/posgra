@@ -1,4 +1,4 @@
-class Posgra::DSL::Context::Group
+class Posgra::DSL::Roles::Group
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
   include Posgra::Utils::Helper

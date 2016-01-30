@@ -1,4 +1,4 @@
-class Posgra::DSL::Context::Role::Schema::On
+class Posgra::DSL::Grants::Role::Schema::On
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
 
