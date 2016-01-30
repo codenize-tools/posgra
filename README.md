@@ -1,8 +1,13 @@
 # Posgra
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/posgra`. To experiment with that code, run `bin/console` for an interactive prompt.
+Posgra is a tool to manage PostgreSQL roles/permissions.
+
+It defines the state of PostgreSQL roles/permissions using Ruby DSL, and updates roles/permissions according to DSL.
+
 
 TODO: Delete this and the text above, and describe your gem
+
+[![Build Status](https://travis-ci.org/winebarrel/posgra.svg?branch=master)](https://travis-ci.org/winebarrel/posgra)
 
 ## Installation
 
@@ -22,20 +27,73 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```sh
+$ posgra help
+Commands:
+  posgra grant SUBCOMMAND  # Manage grants
+  posgra help [COMMAND]    # Describe available commands or one specific command
+  posgra role SUBCOMMAND   # Manage roles
 
-## Development
+Options:
+  -h, [--host=HOST]
+                                         # Default: localhost
+  -p, [--port=N]
+                                         # Default: 5432
+  -d, [--dbname=DBNAME]
+                                         # Default: postgres
+  -U, [--user=USER]
+  -P, [--password=PASSWORD]
+      [--account-output=ACCOUNT-OUTPUT]
+                                         # Default: account.csv
+      [--color], [--no-color]
+                                         # Default: true
+      [--debug], [--no-debug]
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```sh
+posgra role export pg_roles.rb
+vi pg_roles.rb
+posgra role apply --dry-run pg_roles.rb
+posgra role apply pg_roles.rb
+```
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+```sh
+posgra grant export pg_grants.rb
+vi pg_grants.rb
+posgra grant apply --dry-run pg_grants.rb
+posgra grant apply pg_grants.rb
+```
 
-## Contributing
+## DSL Example
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/posgra.
+### Role
 
+```ruby
+user "alice"
 
-## License
+group "staff" do
+  user "bob"
+end
+```
 
-The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+### Grant
 
+```ruby
+role "bob" do
+  schema "main" do
+    on "microposts" do
+      grant "DELETE", grantable: true
+      grant "INSERT"
+      grant "REFERENCES"
+      grant "SELECT"
+      grant "TRIGGER"
+      grant "TRUNCATE"
+      grant "UPDATE"
+    end
+    on "microposts_id_seq" do
+      grant "SELECT"
+      grant "UPDATE"
+    end
+  end
+end
+```

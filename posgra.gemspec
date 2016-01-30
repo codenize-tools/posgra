@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Genki Sugawara']
   spec.email         = ['sugawara@cookpad.com']
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = %q{Posgra is a tool to manage PostgreSQL roles/permissions.}
+  spec.description   = %q{Posgra is a tool to manage PostgreSQL roles/permissions.}
   spec.homepage      = 'https://github.com/winebarrel/posgra'
   spec.license       = 'MIT'
 
