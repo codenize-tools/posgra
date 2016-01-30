@@ -39,6 +39,7 @@ class Posgra::Client
     if options[:split]
       dsl_h = Hash.new {|hash, key| hash[key] = {} }
 
+
       exported.each do |role, schemas|
         dsl = Posgra::DSL.convert_grants({role => schemas}, options)
         dsl_h[role] = dsl

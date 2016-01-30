@@ -1,5 +1,6 @@
 class Posgra::CLI::Role < Thor
   include Posgra::CLI::Helper
+  include Posgra::Logger::Helper
 
   class_option :'include-role'
   class_option :'exclude-role'
@@ -7,6 +8,7 @@ class Posgra::CLI::Role < Thor
   desc 'apply FILE', 'Apply roles'
   option :'dry-run', :type => :boolean, :default => false
   def apply(file)
+    check_fileanem(file)
     updated = client.apply_roles(file)
 
     unless updated
@@ -16,12 +18,18 @@ class Posgra::CLI::Role < Thor
 
   desc 'export [FILE]', 'Export roles'
   def export(file = nil)
+    check_fileanem(file)
     dsl = client.export_roles
 
     if file.nil? or file == '-'
       puts dsl
     else
-      open(file, 'wb') {|f| f.puts dsl }
+      log(:info, "Export Roles to `#{file}`")
+
+      open(file, 'wb') do |f|
+        f.puts Posgra::CLI::MAGIC_COMMENT
+        f.puts dsl
+      end
     end
   end
 end

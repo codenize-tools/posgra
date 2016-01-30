@@ -6,6 +6,12 @@ module Posgra::CLI::Helper
     :exclude_role,
   ]
 
+  def check_fileanem(file)
+    if file =~ /\A-.+/
+      raise "Invalid failname: #{file}"
+    end
+  end
+
   def client
     client_options = {}
     String.colorize = options[:color]
@@ -13,10 +19,10 @@ module Posgra::CLI::Helper
 
     options.each do |key, value|
       if key.to_s =~ /-/
-        key = key.to_s.gsub('-', '_').to_sym
+        key = key.to_s.gsub('-', '_')
       end
 
-      client_options[key] = value if value
+      client_options[key.to_sym] = value if value
     end
 
     REGEXP_OPTIONS.each do |key|
