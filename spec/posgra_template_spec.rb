@@ -75,7 +75,6 @@ describe 'template' do
                 grant "SELECT"
               end
 
-
               role "bob" do
                 schema "main" do
                   include_template "object tmpl", object: "microposts"
