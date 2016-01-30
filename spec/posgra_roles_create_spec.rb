@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'create roles' do
+describe 'roles (create)' do
   include SpecHelper
 
   subject { export_roles }
