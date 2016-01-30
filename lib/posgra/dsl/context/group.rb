@@ -1,6 +1,7 @@
 class Posgra::DSL::Context::Group
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
+  include Posgra::Utils::Helper
 
   attr_reader :result
 
@@ -13,7 +14,9 @@ class Posgra::DSL::Context::Group
   end
 
   def user(name)
-    name = name.kind_of?(Regexp) ? name : name.to_s
-    @result << name
+    if matched?(name, @options[:include_role], @options[:exclude_role])
+      name = name.kind_of?(Regexp) ? name : name.to_s
+      @result << name
+    end
   end
 end

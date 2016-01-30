@@ -111,7 +111,6 @@ class Posgra::Client
   end
 
   def load_file(file, options)
-    # TODO: パーサにフィルタを追加する
     if file.kind_of?(String)
       open(file) do |f|
         Posgra::DSL.parse(f.read, file, options)

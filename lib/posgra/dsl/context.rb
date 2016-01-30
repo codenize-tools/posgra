@@ -1,6 +1,7 @@
 class Posgra::DSL::Context
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
+  include Posgra::Utils::Helper
 
   def self.eval(dsl, path, options = {})
     self.new(path, options) do
@@ -46,10 +47,14 @@ class Posgra::DSL::Context
   end
 
   def group(name, &block)
-    @result[:users_by_group][name] = Posgra::DSL::Context::Group.new(@context, name, @options, &block).result
+    if matched?(name, @options[:include_role], @options[:exclude_role])
+      @result[:users_by_group][name] = Posgra::DSL::Context::Group.new(@context, name, @options, &block).result
+    end
   end
 
   def role(name, &block)
-    @result[:grants_by_role][name] = Posgra::DSL::Context::Role.new(@context, name, @options, &block).result
+    if matched?(name, @options[:include_role], @options[:exclude_role])
+      @result[:grants_by_role][name] = Posgra::DSL::Context::Role.new(@context, name, @options, &block).result
+    end
   end
 end

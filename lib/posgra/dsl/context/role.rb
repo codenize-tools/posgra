@@ -1,6 +1,7 @@
 class Posgra::DSL::Context::Role
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
+  include Posgra::Utils::Helper
 
   attr_reader :result
 
@@ -13,6 +14,8 @@ class Posgra::DSL::Context::Role
   end
 
   def schema(name, &block)
-    @result[name] = Posgra::DSL::Context::Role::Schema.new(@context, name, @options, &block).result
+    if matched?(name, @options[:include_schema], @options[:exclude_schema])
+      @result[name] = Posgra::DSL::Context::Role::Schema.new(@context, name, @options, &block).result
+    end
   end
 end
