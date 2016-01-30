@@ -17,13 +17,15 @@ describe 'roles (delete)' do
 
   context 'when drop user' do
     it do
-      apply_roles do
-        <<-RUBY
-          group "staff" do
-            user "bob"
-          end
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            group "staff" do
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         group "staff" do
@@ -35,12 +37,14 @@ describe 'roles (delete)' do
 
   context 'when drop user in group' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
-          group "staff"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
+            group "staff"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"
@@ -54,12 +58,14 @@ describe 'roles (delete)' do
 
   context 'when drop group' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
-          user "bob"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
+            user "bob"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"

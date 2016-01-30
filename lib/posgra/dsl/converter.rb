@@ -24,7 +24,7 @@ class Posgra::DSL::Converter
 
   def convert_grants
     grants_by_role = @exported || {}
-    output_roles(grants_by_role)
+    output_roles(grants_by_role).strip
   end
 
   private

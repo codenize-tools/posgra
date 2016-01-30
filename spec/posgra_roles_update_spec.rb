@@ -17,14 +17,16 @@ describe 'roles (update)' do
 
   context 'when add member' do
     it do
-      apply_roles do
-        <<-RUBY
-          group "staff" do
-            user "alice"
-            user "bob"
-          end
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            group "staff" do
+              user "alice"
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         group "staff" do
@@ -37,12 +39,14 @@ describe 'roles (update)' do
 
   context 'when drop member' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
-          user "bob"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
+            user "bob"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"
@@ -53,13 +57,15 @@ describe 'roles (update)' do
 
   context 'when group -> user' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
-          user "bob"
-          user "staff"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
+            user "bob"
+            user "staff"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"
@@ -71,15 +77,17 @@ describe 'roles (update)' do
 
   context 'when user -> group' do
     it do
-      apply_roles do
-        <<-RUBY
-          group "alice"
+      expect(
+        apply_roles do
+          <<-RUBY
+            group "alice"
 
-          group "staff" do
-            user "bob"
-          end
-        RUBY
-      end
+            group "staff" do
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         group "alice" do

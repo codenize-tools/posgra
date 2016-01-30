@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe 'roles (create)' do
   include SpecHelper
 
@@ -7,18 +5,24 @@ describe 'roles (create)' do
 
   context 'nothing to do' do
     it do
+      expect(
+        apply_roles { '' }
+      ).to be_falsey
+
       is_expected.to be_empty
     end
   end
 
   context 'when create user' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
-          user "bob"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
+            user "bob"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"
@@ -29,12 +33,14 @@ describe 'roles (create)' do
 
   context 'when create group only' do
     it do
-      apply_roles do
-        <<-RUBY
-          group "staff"
-          group "engineer"
-        RUBY
-      end
+      expect(
+        apply_roles do
+          <<-RUBY
+            group "staff"
+            group "engineer"
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         group "engineer" do
@@ -50,18 +56,20 @@ describe 'roles (create)' do
 
   context 'when create group and user' do
     it do
-      apply_roles do
-        <<-RUBY
-          group "staff" do
-            user "alice"
-            user "bob"
-          end
+      expect(
+        apply_roles do
+          <<-RUBY
+            group "staff" do
+              user "alice"
+              user "bob"
+            end
 
-          group "engineer" do
-            user "bob"
-          end
-        RUBY
-      end
+            group "engineer" do
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         group "engineer" do
@@ -78,15 +86,17 @@ describe 'roles (create)' do
 
   context 'when create group and toplevel user' do
     it do
-      apply_roles do
-        <<-RUBY
-          user "alice"
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice"
 
-          group "staff" do
-            user "bob"
-          end
-        RUBY
-      end
+            group "staff" do
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
 
       is_expected.to eq <<-RUBY.unindent.chomp
         user "alice"
