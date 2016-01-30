@@ -49,13 +49,20 @@ class Posgra::Client
     expected[:users] = build_expected_users(expected[:users_by_group], expected[:grants_by_role])
     actual = Posgra::Exporter.export(@driver, options)
 
-    updated = pre_walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group))
-    updated = walk_users(expected.fetch(:users), actual.fetch(:users)) || updated
-    updated = walk_groups(expected.fetch(:users_by_group), actual.fetch(:users_by_group), expected.fetch(:users)) || updated
-    walk_roles(expected.fetch(:grants_by_role), actual.fetch(:grants_by_role)) || updated
+    expected_users_by_group = expected.fetch(:users_by_group)
+    actual_users_by_group = actual.fetch(:users_by_group)
+    expected_users = expected.fetch(:users)
+    actual_users = actual.fetch(:users)
+    expected_grants_by_role = expected.fetch(:grants_by_role)
+    actual_grants_by_role = actual.fetch(:grants_by_role)
+
+    updated = pre_walk_groups(expected_users_by_group, actual_users_by_group, actual_grants_by_role)
+    updated = walk_users(expected_users, actual_users, actual_grants_by_role) || updated
+    updated = walk_groups(expected_users_by_group, actual_users_by_group, expected_users) || updated
+    walk_roles(expected_grants_by_role, actual_grants_by_role) || updated
   end
 
-  def walk_users(expected, actual)
+  def walk_users(expected, actual, actual_grants_by_role)
     updated = false
 
     (expected - actual).each do |user|
@@ -64,18 +71,20 @@ class Posgra::Client
 
     (actual - expected).each do |user|
       updated = @driver.drop_user(user) || updated
+      actual_grants_by_role.fetch(user, {}).clear
     end
 
     updated
   end
 
-  def pre_walk_groups(expected, actual)
+  def pre_walk_groups(expected, actual, actual_grants_by_role)
     updated = false
 
-    actual.reject {|actual_group, _|
-      expected.has_key?(actual_group)
-    }.each {|actual_group, _|
-      updated = @driver.drop_group(actual_group) || updated
+    actual.reject {|group, _|
+      expected.has_key?(group)
+    }.each {|group, _|
+      updated = @driver.drop_group(group) || updated
+      actual_grants_by_role.fetch(group, {}).clear
     }
 
     updated
@@ -107,7 +116,72 @@ class Posgra::Client
   end
 
   def walk_roles(expected, actual)
-    # TODO:
+    updated = false
+
+    expected.each do |expected_role, expected_schemas|
+      actual_schemas = actual.delete(expected_role) || {}
+      updated = walk_schemas(expected_schemas, actual_schemas, expected_role) || updated
+    end
+
+    actual.each do |actual_role, actual_schemas|
+      actual_schemas.each do |schema, _|
+        updated = @driver.revoke_all_on_schema(actual_role, schema) || updated
+      end
+    end
+
+    updated
+  end
+
+  def walk_schemas(expected, actual, role)
+    updated = false
+
+    expected.each do |expected_schema, expected_objects|
+      actual_objects = actual.delete(expected_schema) || {}
+      updated = walk_objects(expected_objects, actual_objects, role, expected_schema) || updated
+    end
+
+    actual.each do |actual_schema, _|
+      updated = @driver.revoke_all_on_schema(role, actual_schema) || updated
+    end
+
+    updated
+  end
+
+  def walk_objects(expected, actual, role, schema)
+    updated = false
+
+    expected.each do |expected_object, expected_grants|
+      actual_grants = actual.delete(expected_object) || {}
+      updated = walk_grants(expected_grants, actual_grants, role, schema, expected_object) || updated
+    end
+
+    actual.each do |actual_object, _|
+      updated = @driver.revoke_all_on_object(role, schema, actual_object) || updated
+    end
+
+    updated
+  end
+
+  def walk_grants(expected, actual, role, schema, object)
+    updated = false
+
+    expected.each do |expected_priv, expected_options|
+      actual_options = actual.delete(expected_priv)
+
+      if actual_options
+        if expected_options != actual_options
+          updated = @driver.update_grant_options(role, expected_priv, expected_options, schema, object) || updated
+        end
+      else
+        updated = @driver.grant(role, expected_priv, expected_options, schema, object) || updated
+      end
+    end
+
+    actual.each do |actual_priv, _|
+      updated = @driver.revoke(role, actual_priv, schema, object) || updated
+    end
+
+    updated
   end
 
   def load_file(file, options)

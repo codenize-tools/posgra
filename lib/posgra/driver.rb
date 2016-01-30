@@ -46,6 +46,7 @@ class Posgra::Driver
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
+      revoke_all(user)
       @client.query(sql)
       updated = true
     end
@@ -111,14 +112,114 @@ class Posgra::Driver
   end
 
   def revoke_all(role)
-    describe_schemas.each do |schema|
-      sql = "REVOKE ALL ON ALL TABLES IN SCHEMA #{@client.escape_identifier(schema)} FROM #{@client.escape_identifier(role)}"
-      log(:debug, sql, :color => :green)
+    updated = false
 
-      unless @options[:dry_run]
-        @client.query(sql)
-      end
+    describe_schemas.each do |schema|
+      updated = revoke_all_on_schema(role, schema) || updated
     end
+
+    updated
+  end
+
+  def revoke_all_on_schema(role, schema)
+    updated = false
+
+    sql = "REVOKE ALL ON ALL TABLES IN SCHEMA #{@client.escape_identifier(schema)} FROM #{@client.escape_identifier(role)}"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def revoke_all_on_object(role, schema, object)
+    updated = false
+
+    sql = "REVOKE ALL ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def grant(role, priv, options, schema, object)
+    updated = false
+
+    sql = "GRANT #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} TO #{@client.escape_identifier(role)}"
+
+    if options['is_grantable']
+      sql << ' WITH GRANT OPTION'
+    end
+
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def update_grant_options(role, priv, options, schema, object)
+    updated = false
+
+    if options.fetch('is_grantable')
+      updated = grant_grant_option(role, priv, schema, object)
+    else
+      updated = roveke_grant_option(role, priv, schema, object)
+    end
+
+    updated
+  end
+
+  def grant_grant_option(role, priv, schema, object)
+    updated = false
+
+    sql = "GRANT #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} TO #{@client.escape_identifier(role)} WITH GRANT OPTION"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def roveke_grant_option(role, priv, schema, object)
+    updated = false
+
+    sql = "REVOKE GRANT OPTION FOR #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def revoke(role, priv, schema, object)
+    updated = false
+
+    sql = "REVOKE #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    log(:info, sql, :color => :green)
+
+    unless @options[:dry_run]
+      @client.query(sql)
+      updated = true
+    end
+
+    updated
   end
 
   def describe_users
