@@ -14,6 +14,8 @@ class Posgra::DSL::Grants::Role
   end
 
   def schema(name, &block)
+    name = name.to_s
+
     if matched?(name, @options[:include_schema], @options[:exclude_schema])
       @result[name] = Posgra::DSL::Grants::Role::Schema.new(@context, name, @options, &block).result
     end

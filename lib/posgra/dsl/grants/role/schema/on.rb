@@ -13,6 +13,8 @@ class Posgra::DSL::Grants::Role::Schema::On
   end
 
   def grant(name, options = {})
+    name = name.to_s
+
     @result[name] = {
       'is_grantable' => !!options[:grantable]
     }

@@ -50,12 +50,16 @@ class Posgra::DSL::Roles
   end
 
   def user(name, &block)
+    name = name.to_s
+
     if matched?(name, @options[:include_role], @options[:exclude_role])
       @result[:users] << name
     end
   end
 
   def group(name, &block)
+    name = name.to_s
+
     if matched?(name, @options[:include_role], @options[:exclude_role])
       @result[:users_by_group][name] = Posgra::DSL::Roles::Group.new(@context, name, @options, &block).result
     end

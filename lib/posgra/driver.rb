@@ -210,6 +210,24 @@ class Posgra::Driver
     updated
   end
 
+  def describe_objects(schema)
+    rs = @client.exec <<-SQL
+      SELECT
+        pg_class.relname,
+        pg_namespace.nspname
+      FROM
+        pg_class
+        INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
+      WHERE
+        pg_namespace.nspname = #{@client.escape_literal(schema)}
+        AND pg_class.relkind NOT IN ('i')
+    SQL
+
+    rs.map do |row|
+      row.fetch('relname')
+    end
+  end
+
   def describe_users
     rs = @client.exec('SELECT * FROM pg_user')
 
@@ -258,6 +276,8 @@ class Posgra::Driver
         pg_class
         INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
         INNER JOIN pg_user ON pg_class.relowner = pg_user.usesysid
+      WHERE
+        pg_class.relkind NOT IN ('i')
     SQL
 
     grants_by_role = {}

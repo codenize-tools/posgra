@@ -13,6 +13,10 @@ class Posgra::DSL::Grants::Role::Schema
   end
 
   def on(name, &block)
+    unless name.is_a?(Regexp)
+      name = name.to_s
+    end
+
     @result[name] = Posgra::DSL::Grants::Role::Schema::On.new(@context, name, @options, &block).result
   end
 end

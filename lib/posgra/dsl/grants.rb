@@ -44,6 +44,8 @@ class Posgra::DSL::Grants
   end
 
   def role(name, &block)
+    name = name.to_s
+
     if matched?(name, @options[:include_role], @options[:exclude_role])
       @result[name] = Posgra::DSL::Grants::Role.new(@context, name, @options, &block).result
     end

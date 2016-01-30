@@ -1,9 +1,25 @@
 class Posgra::Client
+  DEFAULT_EXCLUDE_SCHEMA = /\A(?:pg_.*|information_schema)\z/
+  DEFAULT_EXCLUDE_ROLE = /\A\z/
+
   def initialize(options = {})
-    options = {
-      :exclude_schema => /\A(?:pg_.*|information_schema)\z/,
-      :exclude_role => /\A\z/,
-    }.merge(options)
+    if options[:exclude_schema]
+      options[:exclude_schema] = Regexp.union(
+        options[:exclude_schema],
+        DEFAULT_EXCLUDE_SCHEMA
+      )
+    else
+      options[:exclude_schema] = DEFAULT_EXCLUDE_SCHEMA
+    end
+
+    if options[:exclude_role]
+      options[:exclude_role] = Regexp.union(
+        options[:exclude_role],
+        DEFAULT_EXCLUDE_SCHEMA
+      )
+    else
+      options[:exclude_role] = DEFAULT_EXCLUDE_ROLE
+    end
 
     @options = options
     client = connect(options)
@@ -151,6 +167,18 @@ class Posgra::Client
 
   def walk_objects(expected, actual, role, schema)
     updated = false
+
+    expected.keys.each do |expected_object|
+      if expected_object.is_a?(Regexp)
+        expected_grants = expected.delete(expected_object)
+
+        @driver.describe_objects(schema).each do |object|
+          if object =~ expected_object
+            expected[object] = expected_grants.dup
+          end
+        end
+      end
+    end
 
     expected.each do |expected_object, expected_grants|
       actual_grants = actual.delete(expected_object) || {}

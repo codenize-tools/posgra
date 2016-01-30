@@ -2,6 +2,7 @@ class Posgra::CLI::Role < Thor
   include Posgra::CLI::Helper
 
   class_option :'include-role'
+  class_option :'exclude-role'
 
   desc 'apply FILE', 'Apply roles'
   option :'dry-run', :type => :boolean, :default => false

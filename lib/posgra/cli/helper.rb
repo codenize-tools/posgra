@@ -1,12 +1,15 @@
 module Posgra::CLI::Helper
   REGEXP_OPTIONS = [
     :include_schema,
+    :exclude_schema,
     :include_role,
+    :exclude_role,
   ]
 
   def client
     client_options = {}
     String.colorize = options[:color]
+    Posgra::Logger.instance.set_debug(options[:debug])
 
     options.each do |key, value|
       if key.to_s =~ /-/

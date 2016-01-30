@@ -2,7 +2,9 @@ class Posgra::CLI::Grant < Thor
   include Posgra::CLI::Helper
 
   class_option :'include-schema'
+  class_option :'exclude-schema'
   class_option :'include-role'
+  class_option :'exclude-role'
 
   desc 'apply FILE', 'Apply grants'
   option :'dry-run', :type => :boolean, :default => false
