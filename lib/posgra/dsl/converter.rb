@@ -9,8 +9,13 @@ class Posgra::DSL::Converter
   end
 
   def convert
+    users = @exported[:users] || []
     users_by_group = @exported[:users_by_group] || {}
     grants_by_role = @exported[:grants_by_role] || {}
+
+    users.each do |user|
+      grants_by_role[user] ||= {}
+    end
 
     [
       output_groups(users_by_group),
