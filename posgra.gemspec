@@ -6,8 +6,8 @@ require 'posgra/version'
 Gem::Specification.new do |spec|
   spec.name          = 'posgra'
   spec.version       = Posgra::VERSION
-  spec.authors       = ['Genki Sugawara']
-  spec.email         = ['sugawara@cookpad.com']
+  spec.authors       = ['winebarrel']
+  spec.email         = ['sgwr_dts@yahoo.co.jp']
 
   spec.summary       = %q{Posgra is a tool to manage PostgreSQL roles/permissions.}
   spec.description   = %q{Posgra is a tool to manage PostgreSQL roles/permissions.}
