@@ -10,59 +10,63 @@ class Posgra::Client
     @driver = Posgra::Driver.new(client, options)
   end
 
-  def export(options = {})
+  def export_roles(options = {})
     options = @options.merge(options)
-    exported = Posgra::Exporter.export(@driver, options)
+    exported = Posgra::Exporter.export_roles(@driver, options)
+    Posgra::DSL.convert_roles(exported, options)
+  end
+
+  def export_grants(options = {})
+    options = @options.merge(options)
+    exported = Posgra::Exporter.export_grants(@driver, options)
 
     if options[:split]
       dsl_h = Hash.new {|hash, key| hash[key] = {} }
 
-      exported.each do |export_type, export_values|
-        export_values.each do |item|
-          if export_values.is_a?(Hash)
-            key, value = item
-            item = {key => value}
-          else
-            item = [item]
-          end
-
-          dsl = Posgra::DSL.convert({export_type => item}, options)
-          dsl_h[export_type][key] = dsl
-        end
+      exported.each do |role, schemas|
+        dsl = Posgra::DSL.convert_grants({role => schemas}, options)
+        dsl_h[role] = dsl
       end
 
       dsl_h
     else
-      Posgra::DSL.convert(exported, options)
+      Posgra::DSL.convert_grants(exported, options)
     end
   end
 
-  def apply(file, options = {})
+  def apply_roles(file, options = {})
     options = @options.merge(options)
-    walk(file, options)
+    walk_for_roles(file, options)
+  end
+
+  def apply_grants(file, options = {})
+    options = @options.merge(options)
+    walk_for_grants(file, options)
   end
 
   private
 
-  def walk(file, options)
-    expected = load_file(file, options)
-    expected[:users] = build_expected_users(expected[:users_by_group], expected[:grants_by_role])
-    actual = Posgra::Exporter.export(@driver, options)
+  def walk_for_roles(file, options)
+    expected = load_file(file, :parse_roles, options)
+    actual = Posgra::Exporter.export_roles(@driver, options)
 
     expected_users_by_group = expected.fetch(:users_by_group)
     actual_users_by_group = actual.fetch(:users_by_group)
-    expected_users = expected.fetch(:users)
+    expected_users = (expected_users_by_group.values.flatten + expected.fetch(:users)).uniq
     actual_users = actual.fetch(:users)
-    expected_grants_by_role = expected.fetch(:grants_by_role)
-    actual_grants_by_role = actual.fetch(:grants_by_role)
 
-    updated = pre_walk_groups(expected_users_by_group, actual_users_by_group, actual_grants_by_role)
-    updated = walk_users(expected_users, actual_users, actual_grants_by_role) || updated
-    updated = walk_groups(expected_users_by_group, actual_users_by_group, expected_users) || updated
-    walk_roles(expected_grants_by_role, actual_grants_by_role) || updated
+    updated = pre_walk_groups(expected_users_by_group, actual_users_by_group)
+    updated = walk_users(expected_users, actual_users) || updated
+    walk_groups(expected_users_by_group, actual_users_by_group, expected_users) || updated
   end
 
-  def walk_users(expected, actual, actual_grants_by_role)
+  def walk_for_grants(file, options)
+    expected = load_file(file, :parse_grants, options)
+    actual = Posgra::Exporter.export_grants(@driver, options)
+    walk_roles(expected, actual)
+  end
+
+  def walk_users(expected, actual)
     updated = false
 
     (expected - actual).each do |user|
@@ -71,20 +75,18 @@ class Posgra::Client
 
     (actual - expected).each do |user|
       updated = @driver.drop_user(user) || updated
-      actual_grants_by_role.fetch(user, {}).clear
     end
 
     updated
   end
 
-  def pre_walk_groups(expected, actual, actual_grants_by_role)
+  def pre_walk_groups(expected, actual)
     updated = false
 
     actual.reject {|group, _|
       expected.has_key?(group)
     }.each {|group, _|
       updated = @driver.drop_group(group) || updated
-      actual_grants_by_role.fetch(group, {}).clear
     }
 
     updated
@@ -184,23 +186,16 @@ class Posgra::Client
     updated
   end
 
-  def load_file(file, options)
+  def load_file(file, method, options)
     if file.kind_of?(String)
       open(file) do |f|
-        Posgra::DSL.parse(f.read, file, options)
+        Posgra::DSL.send(method, f.read, file, options)
       end
     elsif file.respond_to?(:read)
-      Posgra::DSL.parse(file.read, file.path, options)
+      Posgra::DSL.send(method, file.read, file.path, options)
     else
       raise TypeError, "can't convert #{file} into File"
     end
-  end
-
-  def build_expected_users(users_by_group, grants_by_role)
-    groups = users_by_group.keys
-    users = users_by_group.values.flatten
-    roles_without_group = grants_by_role.keys - groups
-    (users + roles_without_group).uniq
   end
 
   def connect(options)

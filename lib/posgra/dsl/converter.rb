@@ -1,6 +1,10 @@
 class Posgra::DSL::Converter
-  def self.convert(exported, options = {})
-    self.new(exported, options).convert
+  def self.convert_roles(exported, options = {})
+    self.new(exported, options).convert_roles
+  end
+
+  def self.convert_grants(exported, options = {})
+    self.new(exported, options).convert_grants
   end
 
   def initialize(exported, options = {})
@@ -8,22 +12,28 @@ class Posgra::DSL::Converter
     @options = options
   end
 
-  def convert
-    users = @exported[:users] || []
+  def convert_roles
     users_by_group = @exported[:users_by_group] || {}
-    grants_by_role = (@exported[:grants_by_role] || {}).dup
-
-    users.each do |user|
-      grants_by_role[user] ||= {}
-    end
+    users = @exported.fetch(:users, []) - users_by_group.values.flatten
 
     [
+      output_users(users),
       output_groups(users_by_group),
-      output_roles(grants_by_role),
     ].join("\n").strip
   end
 
+  def convert_grants
+    grants_by_role = @exported || {}
+    output_roles(grants_by_role)
+  end
+
   private
+
+  def output_users(users)
+    users.sort.map {|user|
+      "user #{user.inspect}"
+    }.join("\n") + "\n"
+  end
 
   def output_groups(users_by_group)
     users_by_group.sort_by {|g, _| g }.map {|group, users|

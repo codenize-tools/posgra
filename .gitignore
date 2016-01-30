@@ -8,5 +8,5 @@
 /spec/reports/
 /tmp/
 test.rb
-PGrantfile
+PGrantfile*
 account.csv

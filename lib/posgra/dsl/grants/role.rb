@@ -1,4 +1,4 @@
-class Posgra::DSL::Context::Role
+class Posgra::DSL::Grants::Role
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
   include Posgra::Utils::Helper
@@ -15,7 +15,7 @@ class Posgra::DSL::Context::Role
 
   def schema(name, &block)
     if matched?(name, @options[:include_schema], @options[:exclude_schema])
-      @result[name] = Posgra::DSL::Context::Role::Schema.new(@context, name, @options, &block).result
+      @result[name] = Posgra::DSL::Grants::Role::Schema.new(@context, name, @options, &block).result
     end
   end
 end
