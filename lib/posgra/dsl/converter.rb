@@ -11,7 +11,7 @@ class Posgra::DSL::Converter
   def convert
     users = @exported[:users] || []
     users_by_group = @exported[:users_by_group] || {}
-    grants_by_role = @exported[:grants_by_role] || {}
+    grants_by_role = (@exported[:grants_by_role] || {}).dup
 
     users.each do |user|
       grants_by_role[user] ||= {}
