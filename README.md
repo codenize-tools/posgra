@@ -97,3 +97,36 @@ role "bob" do
   end
 end
 ```
+
+### Template
+
+```ruby
+template "all grants" do
+  on context.object do
+    grant "DELETE", grantable: true
+    grant "INSERT"
+    grant "REFERENCES"
+    grant "SELECT"
+    grant "TRIGGER"
+    grant "TRUNCATE"
+    grant "UPDATE"
+  end
+end
+
+template "grant select" do
+  grant "SELECT"
+end
+
+role "bob" do
+  schema "main" do
+    include_template "all grants", object: "microposts"
+    on "microposts_id_seq", expired: '2014/10/07' do
+      grant "SELECT"
+      grant "UPDATE"
+    end
+    on /^user/ do
+      include_template "grant select"
+    end
+  end
+end
+```
