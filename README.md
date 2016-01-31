@@ -61,6 +61,13 @@ posgra grant apply --dry-run pg_grants.rb
 posgra grant apply pg_grants.rb
 ```
 
+### for Redshift
+
+```sh
+export POSGRA_DEFAULT_ACL_PRIVS=arwdRxt
+posgra grant export pg_grants.rb
+```
+
 ## DSL Example
 
 ### Role

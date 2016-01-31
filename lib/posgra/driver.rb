@@ -2,7 +2,8 @@ class Posgra::Driver
   include Posgra::Logger::Helper
   include Posgra::Utils::Helper
 
-  DEFAULT_ACL = '{%s=arwdDxt/%s}'
+  DEFAULT_ACL_PRIVS = ENV['POSGRA_DEFAULT_ACL_PRIVS'] || 'arwdDxt'
+  DEFAULT_ACL = "{%s=#{DEFAULT_ACL_PRIVS}/%s}"
 
   PRIVILEGE_TYPES = {
     'a' => 'INSERT',
