@@ -13,6 +13,10 @@ class Posgra::Driver
     'x' => 'REFERENCES',
     't' => 'TRIGGER',
     'U' => 'USAGE',
+    'R' => 'RULE',
+    'X' => 'EXECUTE',
+    'C' => 'CREATE',
+    'T' => 'TEMPORARY',
   }
 
   def initialize(client, options = {})
