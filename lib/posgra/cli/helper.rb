@@ -31,7 +31,7 @@ module Posgra::CLI::Helper
       end
     end
 
-    client_options[:identifier] = Posgra::Identifier::Auto.new(options['account-output'])
+    client_options[:identifier] = Posgra::Identifier::Auto.new(options['account-output'], client_options)
     Posgra::Client.new(client_options)
   end
 end

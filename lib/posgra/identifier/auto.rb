@@ -13,7 +13,20 @@ class Posgra::Identifier::Auto
   private
 
   def mkpasswd(len = 8)
-    [*1..9, *'A'..'Z', *'a'..'z'].shuffle.slice(0, len).join
+    sources = [
+      (1..9).to_a,
+      ('A'..'Z').to_a,
+      ('a'..'z').to_a,
+    ].shuffle
+
+    passwd = []
+
+    len.times do |i|
+      src = sources[i % sources.length]
+      passwd << src.shuffle.shift
+    end
+
+    passwd.join
   end
 
   def puts_password(user, password)
