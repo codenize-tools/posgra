@@ -32,7 +32,10 @@ RSpec.configure do |config|
 end
 
 module SpecHelper
+  DBHOST = 'localhost'
+  DBPORT = 5432
   DBUSER = ENV['POSGRA_TEST_USER'] || ENV['USER']
+  DBPASS = nil
   DBNAME = 'posgra_test'
   DEFAULT_DBNAME = 'postgres'
 
@@ -66,7 +69,10 @@ module SpecHelper
 
   def run_client(options = {})
     options = {
+      host: DBHOST,
+      port: DBPORT,
       user: DBUSER,
+      password: DBPASS,
       dbname: DBNAME,
       logger: Logger.new('/dev/null'),
       include_role: /\A(?:alice|bob|staff|engineer)\z/,
@@ -110,7 +116,13 @@ module SpecHelper
 
   def pg(dbname = DBNAME)
     begin
-      conn = PGconn.connect(dbname: dbname)
+      conn = PGconn.connect(
+        host: DBHOST,
+        port: DBPORT,
+        user: DBUSER,
+        password: DBPASS,
+        dbname: dbname,
+      )
       retval = yield(conn)
     ensure
       conn.close if conn
