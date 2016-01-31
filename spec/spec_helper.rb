@@ -32,12 +32,12 @@ RSpec.configure do |config|
 end
 
 module SpecHelper
-  DBHOST = 'localhost'
-  DBPORT = 5432
+  DBHOST = ENV['POSGRA_TEST_HOST'] || 'localhost'
+  DBPORT = (ENV['POSGRA_TEST_PORT'] || 5432).to_i
   DBUSER = ENV['POSGRA_TEST_USER'] || ENV['USER']
-  DBPASS = nil
+  DBPASS = ENV['POSGRA_TEST_PASS']
   DBNAME = 'posgra_test'
-  DEFAULT_DBNAME = 'postgres'
+  DEFAULT_DBNAME = ENV['POSGRA_TEST_DEFAULT_DB'] || 'postgres'
 
   def apply_roles(options = {})
     tempfile(yield) do |f|
