@@ -269,7 +269,7 @@ class Posgra::Driver
     rs.each do |row|
       group = row.fetch('groname')
       user = row.fetch('usename')
-      next unless [group, user].any? {|i| matched?(i, @options[:include_role], @options[:exclude_role]) }
+      next unless [group, user].any? {|i| not i.nil? and matched?(i, @options[:include_role], @options[:exclude_role]) }
       users_by_group[group] ||= []
       users_by_group[group] << user if user
     end
