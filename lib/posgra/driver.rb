@@ -5,6 +5,10 @@ class Posgra::Driver
   DEFAULT_ACL_PRIVS = ENV['POSGRA_DEFAULT_ACL_PRIVS'] || 'arwdDxt'
   DEFAULT_ACL = "{%s=#{DEFAULT_ACL_PRIVS}/%s}"
 
+  DEFAULT_ACL_BY_KIND = {
+    'S' => '{%s=rwU/%s}'
+  }
+
   PRIVILEGE_TYPES = {
     'a' => 'INSERT',
     'r' => 'SELECT',
@@ -283,7 +287,8 @@ class Posgra::Driver
         pg_class.relname,
         pg_namespace.nspname,
         pg_class.relacl,
-        pg_user.usename
+        pg_user.usename,
+        pg_class.relkind
       FROM
         pg_class
         INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
@@ -298,11 +303,12 @@ class Posgra::Driver
       nspname = row.fetch('nspname')
       relacl = row.fetch('relacl')
       usename = row.fetch('usename')
+      relkind = row.fetch('relkind')
 
       next unless matched?(relname, @options[:include_object], @options[:exclude_object])
       next unless matched?(nspname, @options[:include_schema], @options[:exclude_schema])
 
-      parse_aclitems(relacl, usename).each do |aclitem|
+      parse_aclitems(relacl, usename, relkind).each do |aclitem|
         role = aclitem.fetch('grantee')
         privs = aclitem.fetch('privileges')
         next unless matched?(role, @options[:include_role], @options[:exclude_role])
@@ -317,8 +323,9 @@ class Posgra::Driver
 
   private
 
-  def parse_aclitems(aclitems, owner)
-    aclitems ||= DEFAULT_ACL % [owner, owner]
+  def parse_aclitems(aclitems, owner, relkind)
+    aclitems_fmt = DEFAULT_ACL_BY_KIND.fetch(relkind, DEFAULT_ACL)
+    aclitems ||= aclitems_fmt % [owner, owner]
     aclitems = aclitems[1..-2].split(',')
 
     aclitems.map do |aclitem|
