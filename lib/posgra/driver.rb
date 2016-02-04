@@ -229,9 +229,15 @@ class Posgra::Driver
         AND pg_class.relkind NOT IN ('i')
     SQL
 
-    rs.map do |row|
-      row.fetch('relname')
+    objects = []
+
+    rs.each do |row|
+      relname = row.fetch('relname')
+      next unless matched?(relname, @options[:include_object], @options[:exclude_object])
+      objects << relname
     end
+
+    objects
   end
 
   def describe_users
@@ -293,6 +299,7 @@ class Posgra::Driver
       relacl = row.fetch('relacl')
       usename = row.fetch('usename')
 
+      next unless matched?(relname, @options[:include_object], @options[:exclude_object])
       next unless matched?(nspname, @options[:include_schema], @options[:exclude_schema])
 
       parse_aclitems(relacl, usename).each do |aclitem|
@@ -306,19 +313,6 @@ class Posgra::Driver
     end
 
     grants_by_role
-  end
-
-  def describe_schemas
-    rs = @client.exec <<-SQL
-      SELECT
-        nspname
-      FROM
-        pg_namespace
-    SQL
-
-    rs.map do |row|
-      row.fetch('nspname')
-    end
   end
 
   private
@@ -341,7 +335,7 @@ class Posgra::Driver
 
   def expand_privileges(privileges)
     options_by_privilege = {}
-p
+
     privileges.scan(/([a-z])(\*)?/i).each do |privilege_type_char,is_grantable|
       privilege_type = PRIVILEGE_TYPES[privilege_type_char]
 

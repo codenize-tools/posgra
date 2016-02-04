@@ -4,6 +4,8 @@ module Posgra::CLI::Helper
     :exclude_schema,
     :include_role,
     :exclude_role,
+    :include_object,
+    :exclude_object,
   ]
 
   def check_fileanem(file)

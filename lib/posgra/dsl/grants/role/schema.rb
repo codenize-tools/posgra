@@ -1,6 +1,7 @@
 class Posgra::DSL::Grants::Role::Schema
   include Posgra::Logger::Helper
   include Posgra::TemplateHelper
+  include Posgra::Utils::Helper
 
   attr_reader :result
 
@@ -15,6 +16,7 @@ class Posgra::DSL::Grants::Role::Schema
   def on(name, options = {}, &block)
     unless name.is_a?(Regexp)
       name = name.to_s
+      return unless matched?(name, @options[:include_object], @options[:exclude_object])
     end
 
     if options[:expired]
