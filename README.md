@@ -4,6 +4,7 @@ Posgra is a tool to manage PostgreSQL roles/permissions.
 
 It defines the state of PostgreSQL roles/permissions using Ruby DSL, and updates roles/permissions according to DSL.
 
+[![Gem Version](https://badge.fury.io/rb/posgra.svg)](https://badge.fury.io/rb/posgra)
 [![Build Status](https://travis-ci.org/winebarrel/posgra.svg?branch=master)](https://travis-ci.org/winebarrel/posgra)
 
 ## Installation
