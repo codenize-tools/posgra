@@ -75,7 +75,7 @@ module SpecHelper
       password: DBPASS,
       dbname: DBNAME,
       logger: Logger.new('/dev/null'),
-      include_role: /\A(?:alice|bob|staff|engineer)\z/,
+      include_role: /\A(?:alice|bob|staff|engineer)/,
       exclude_role: /\A#{DBUSER}\z/,
       identifier: Posgra::Identifier::Auto.new('/dev/null')
     }.merge(options)
@@ -195,6 +195,10 @@ module SpecHelper
         DROP ROLE IF EXISTS bob;
         DROP ROLE IF EXISTS staff;
         DROP ROLE IF EXISTS engineer;
+        DROP ROLE IF EXISTS "alice alice";
+        DROP ROLE IF EXISTS "bob-bob";
+        DROP ROLE IF EXISTS "staff staff";
+        DROP ROLE IF EXISTS "engineer-engineer";
       SQL
     end
   end

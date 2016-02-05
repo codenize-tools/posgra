@@ -42,7 +42,7 @@ class Posgra::Driver
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -56,7 +56,7 @@ class Posgra::Driver
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -70,7 +70,7 @@ class Posgra::Driver
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -84,7 +84,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -98,7 +98,7 @@ class Posgra::Driver
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -112,7 +112,7 @@ class Posgra::Driver
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -122,12 +122,8 @@ class Posgra::Driver
   def revoke_all_on_schema(role, schema)
     updated = false
 
-    sql = "REVOKE ALL ON ALL TABLES IN SCHEMA #{@client.escape_identifier(schema)} FROM #{@client.escape_identifier(role)}"
-    log(:info, sql, :color => :green)
-
-    unless @options[:dry_run]
-      @client.query(sql)
-      updated = true
+    describe_objects(schema).each do |object|
+      updated = revoke_all_on_object(role, schema, object) || updated
     end
 
     updated
@@ -140,7 +136,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -159,7 +155,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -185,7 +181,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -199,7 +195,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -213,7 +209,7 @@ class Posgra::Driver
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
-      @client.query(sql)
+      exec(sql)
       updated = true
     end
 
@@ -221,7 +217,7 @@ class Posgra::Driver
   end
 
   def describe_objects(schema)
-    rs = @client.exec <<-SQL
+    rs = exec <<-SQL
       SELECT
         pg_class.relname,
         pg_namespace.nspname
@@ -245,7 +241,7 @@ class Posgra::Driver
   end
 
   def describe_users
-    rs = @client.exec('SELECT * FROM pg_user')
+    rs = exec('SELECT * FROM pg_user')
 
     options_by_user = {}
 
@@ -259,7 +255,7 @@ class Posgra::Driver
   end
 
   def describe_groups
-    rs = @client.exec <<-SQL
+    rs = exec <<-SQL
       SELECT
         pg_group.groname,
         pg_user.usename
@@ -282,7 +278,7 @@ class Posgra::Driver
   end
 
   def describe_grants
-    rs = @client.exec <<-SQL
+    rs = exec <<-SQL
       SELECT
         pg_class.relname,
         pg_namespace.nspname,
@@ -329,8 +325,11 @@ class Posgra::Driver
     aclitems = aclitems[1..-2].split(',')
 
     aclitems.map do |aclitem|
+      aclitem = unquote_aclitem(aclitem)
       grantee, privileges_grantor = aclitem.split('=', 2)
       privileges, grantor = privileges_grantor.split('/', 2)
+      grantee = unescape_aclname(grantee)
+      grantor = unescape_aclname(grantor)
 
       {
         'grantee' => grantee,
@@ -357,5 +356,18 @@ class Posgra::Driver
     end
 
     options_by_privilege
+  end
+
+  def exec(sql)
+    log(:debug, sql)
+    @client.exec(sql)
+  end
+
+  def unquote_aclitem(str)
+    str.sub(/\A"/, '').sub(/"\z/, '').gsub('\\', '')
+  end
+
+  def unescape_aclname(str)
+    str.sub(/\A"/, '').sub(/"\z/, '').gsub('""', '"')
   end
 end
