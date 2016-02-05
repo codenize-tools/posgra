@@ -15,7 +15,7 @@ class Posgra::Client
     if options[:exclude_role]
       options[:exclude_role] = Regexp.union(
         options[:exclude_role],
-        DEFAULT_EXCLUDE_SCHEMA
+        DEFAULT_EXCLUDE_ROLE
       )
     else
       options[:exclude_role] = DEFAULT_EXCLUDE_ROLE
