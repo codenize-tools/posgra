@@ -369,6 +369,6 @@ class Posgra::Driver
 
   def unescape_aclname(str)
     # Fix for Redshift: "group "
-    str.sub(/\A"/, '').sub(/"\z/, '').gsub('""', '"').gsub(/\Agroup /)
+    str.sub(/\A"/, '').sub(/"\z/, '').gsub('""', '"').sub(/\Agroup /, '')
   end
 end
