@@ -35,6 +35,8 @@ class Posgra::CLI::Grant < Thor
       requires = []
 
       dsl.each do |user, content|
+        user = user.gsub(/\s+/, '_')
+        user = '_' if user.empty?
         grant_file = "#{user}.rb"
         requires << grant_file
         log(:info, "  write `#{grant_file}`")
