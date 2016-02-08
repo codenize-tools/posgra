@@ -15,10 +15,6 @@ class Posgra::DSL::Roles::Group
 
   def user(name)
     name = name.to_s
-
-    if matched?(name, @options[:include_role], @options[:exclude_role])
-      name = name.kind_of?(Regexp) ? name : name.to_s
-      @result << name
-    end
+    @result << name
   end
 end

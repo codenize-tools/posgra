@@ -74,7 +74,7 @@ class Posgra::Client
     expected_users_by_group = expected.fetch(:users_by_group)
     actual_users_by_group = actual.fetch(:users_by_group)
     expected_users = (expected_users_by_group.values.flatten + expected.fetch(:users)).uniq
-    actual_users = actual.fetch(:users)
+    actual_users = (actual_users_by_group.values.flatten + actual.fetch(:users)).uniq
 
     updated = pre_walk_groups(expected_users_by_group, actual_users_by_group)
     updated = walk_users(expected_users, actual_users) || updated

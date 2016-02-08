@@ -10,7 +10,23 @@ class Posgra::DSL::Roles
   end
 
   def result
-    @result.fetch(:users).uniq
+    @result[:users].uniq!
+
+    group_users = @result[:users_by_group].flat_map do |group, users|
+      users.map {|u| [group, u] }
+    end
+
+    new_users_by_group = {}
+
+    group_users.each do |group, user|
+      next unless [group, user].any? {|i| matched?(i, @options[:include_role], @options[:exclude_role]) }
+      new_users_by_group[group] ||= []
+      new_users_by_group[group] << user
+    end
+
+    new_users_by_group.values.each(&:uniq!)
+    @result[:users_by_group] = new_users_by_group
+
     @result
   end
 
@@ -59,9 +75,6 @@ class Posgra::DSL::Roles
 
   def group(name, &block)
     name = name.to_s
-
-    if matched?(name, @options[:include_role], @options[:exclude_role])
-      @result[:users_by_group][name] = Posgra::DSL::Roles::Group.new(@context, name, @options, &block).result
-    end
+    @result[:users_by_group][name] = Posgra::DSL::Roles::Group.new(@context, name, @options, &block).result
   end
 end
