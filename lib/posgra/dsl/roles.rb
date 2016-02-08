@@ -13,15 +13,19 @@ class Posgra::DSL::Roles
     @result[:users].uniq!
 
     group_users = @result[:users_by_group].flat_map do |group, users|
-      users.map {|u| [group, u] }
+      if users.empty?
+        [group, nil]
+      else
+        users.map {|u| [group, u] }
+      end
     end
 
     new_users_by_group = {}
 
     group_users.each do |group, user|
-      next unless [group, user].any? {|i| matched?(i, @options[:include_role], @options[:exclude_role]) }
+      next unless [group, user].any? {|i| not i.nil? and matched?(i, @options[:include_role], @options[:exclude_role]) }
       new_users_by_group[group] ||= []
-      new_users_by_group[group] << user
+      new_users_by_group[group] << user if user
     end
 
     new_users_by_group.values.each(&:uniq!)
