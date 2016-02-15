@@ -2,28 +2,6 @@ class Posgra::Driver
   include Posgra::Logger::Helper
   include Posgra::Utils::Helper
 
-  DEFAULT_ACL_PRIVS = ENV['POSGRA_DEFAULT_ACL_PRIVS'] || 'arwdDxt'
-  DEFAULT_ACL = "{%s=#{DEFAULT_ACL_PRIVS}/%s}"
-
-  DEFAULT_ACL_BY_KIND = {
-    'S' => '{%s=rwU/%s}'
-  }
-
-  PRIVILEGE_TYPES = {
-    'a' => 'INSERT',
-    'r' => 'SELECT',
-    'w' => 'UPDATE',
-    'd' => 'DELETE',
-    'D' => 'TRUNCATE',
-    'x' => 'REFERENCES',
-    't' => 'TRIGGER',
-    'U' => 'USAGE',
-    'R' => 'RULE',
-    'X' => 'EXECUTE',
-    'C' => 'CREATE',
-    'T' => 'TEMPORARY',
-  }
-
   def initialize(client, options = {})
     unless client.type_map_for_results.is_a?(PG::TypeMapAllStrings)
       raise 'PG::Connection#type_map_for_results must be PG::TypeMapAllStrings'
@@ -280,38 +258,41 @@ class Posgra::Driver
   def describe_grants
     rs = exec <<-SQL
       SELECT
-        pg_class.relname,
-        pg_namespace.nspname,
-        pg_class.relacl,
-        pg_user.usename,
-        pg_class.relkind
-      FROM
-        pg_class
-        INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
-        INNER JOIN pg_user ON pg_class.relowner = pg_user.usesysid
-      WHERE
-        pg_class.relkind NOT IN ('i')
+        c.relname,
+        n.nspname,
+        r.rolname,
+        c.privilege_type,
+        c.is_grantable
+      FROM (
+        SELECT
+          *,
+          (aclexplode(coalesce(relacl, acldefault(CASE relkind WHEN 'v' THEN 'r' ELSE relkind END, relowner)))).*
+        FROM
+          pg_class
+        WHERE
+          relkind NOT IN ('i')
+      ) c
+      INNER JOIN pg_namespace n ON n.oid = c.relnamespace
+      INNER JOIN pg_roles r ON r.oid = c.grantee
     SQL
 
     grants_by_role = {}
     rs.each do |row|
       relname = row.fetch('relname')
       nspname = row.fetch('nspname')
-      relacl = row.fetch('relacl')
-      usename = row.fetch('usename')
-      relkind = row.fetch('relkind')
+      rolname = row.fetch('rolname')
+      privilege_type = row.fetch('privilege_type')
+      is_grantable = row.fetch('is_grantable')
 
       next unless matched?(relname, @options[:include_object], @options[:exclude_object])
       next unless matched?(nspname, @options[:include_schema], @options[:exclude_schema])
 
-      parse_aclitems(relacl, usename, relkind).each do |aclitem|
-        role = aclitem.fetch('grantee')
-        privs = aclitem.fetch('privileges')
-        next unless matched?(role, @options[:include_role], @options[:exclude_role])
-        grants_by_role[role] ||= {}
-        grants_by_role[role][nspname] ||= {}
-        grants_by_role[role][nspname][relname] = privs
-      end
+      next unless matched?(rolname, @options[:include_role], @options[:exclude_role])
+      grants_by_role[rolname] ||= {}
+      grants_by_role[rolname][nspname] ||= {}
+      grants_by_role[rolname][nspname][relname] ||= {}
+      grants_by_role[rolname][nspname][relname][privilege_type] ||= {}
+      grants_by_role[rolname][nspname][relname][privilege_type]['is_grantable'] = is_grantable == 't'
     end
 
     grants_by_role
@@ -319,56 +300,8 @@ class Posgra::Driver
 
   private
 
-  def parse_aclitems(aclitems, owner, relkind)
-    aclitems_fmt = DEFAULT_ACL_BY_KIND.fetch(relkind, DEFAULT_ACL)
-    aclitems ||= aclitems_fmt % [owner, owner]
-    aclitems = aclitems[1..-2].split(',')
-
-    aclitems.map do |aclitem|
-      aclitem = unquote_aclitem(aclitem)
-      grantee, privileges_grantor = aclitem.split('=', 2)
-      privileges, grantor = privileges_grantor.split('/', 2)
-      grantee = unescape_aclname(grantee)
-      grantor = unescape_aclname(grantor)
-
-      {
-        'grantee' => grantee,
-        'privileges' => expand_privileges(privileges),
-        'grantor' => grantor,
-      }
-    end
-  end
-
-  def expand_privileges(privileges)
-    options_by_privilege = {}
-
-    privileges.scan(/([a-z])(\*)?/i).each do |privilege_type_char,is_grantable|
-      privilege_type = PRIVILEGE_TYPES[privilege_type_char]
-
-      unless privilege_type
-        log(:warn, "Unknown privilege type: #{privilege_type_char}", :color => :yellow)
-        next
-      end
-
-      options_by_privilege[privilege_type] = {
-        'is_grantable' => !!is_grantable,
-      }
-    end
-
-    options_by_privilege
-  end
-
   def exec(sql)
     log(:debug, sql)
     @client.exec(sql)
-  end
-
-  def unquote_aclitem(str)
-    str.sub(/\A"/, '').sub(/"\z/, '').gsub('\\', '')
-  end
-
-  def unescape_aclname(str)
-    # Fix for Redshift: "group "
-    str.sub(/\A"/, '').sub(/"\z/, '').gsub('""', '"').sub(/\Agroup /, '')
   end
 end
