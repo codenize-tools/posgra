@@ -32,10 +32,10 @@ RSpec.configure do |config|
 end
 
 module SpecHelper
-  DBHOST = ENV['POSGRA_TEST_HOST'] || 'localhost'
+  DBHOST = ENV['POSGRA_TEST_HOST'] || '127.0.0.1'
   DBPORT = (ENV['POSGRA_TEST_PORT'] || 5432).to_i
-  DBUSER = ENV['POSGRA_TEST_USER'] || ENV['USER']
-  DBPASS = ENV['POSGRA_TEST_PASS']
+  DBUSER = ENV['POSGRA_TEST_USER'] || 'postgres'
+  DBPASS = ENV['POSGRA_TEST_PASS'] || 'password'
   DBNAME = 'posgra_test'
   DEFAULT_DBNAME = ENV['POSGRA_TEST_DEFAULT_DB'] || 'postgres'
 
