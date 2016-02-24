@@ -5,6 +5,8 @@ class Posgra::Driver
   DEFAULT_ACL_PRIVS = ENV['POSGRA_DEFAULT_ACL_PRIVS'] || 'arwdDxt'
   DEFAULT_ACL = "{%s=#{DEFAULT_ACL_PRIVS}/%s}"
 
+  DEFAULT_DATABASE_ACL = "{%s=CTc/%s}"
+
   DEFAULT_ACL_BY_KIND = {
     'S' => '{%s=rwU/%s}'
   }
@@ -21,6 +23,7 @@ class Posgra::Driver
     'R' => 'RULE',
     'X' => 'EXECUTE',
     'C' => 'CREATE',
+    'c' => 'CONNECT',
     'T' => 'TEMPORARY',
   }
 
@@ -294,6 +297,7 @@ class Posgra::Driver
     SQL
 
     grants_by_role = {}
+
     rs.each do |row|
       relname = row.fetch('relname')
       nspname = row.fetch('nspname')
@@ -317,11 +321,52 @@ class Posgra::Driver
     grants_by_role
   end
 
+  def describe_databases
+    rs = exec <<-SQL
+      SELECT
+        pg_database.datname,
+        pg_database.datacl,
+        pg_user.usename
+      FROM
+        pg_database
+        INNER JOIN pg_user ON pg_database.datdba = pg_user.usesysid
+    SQL
+
+    grants_by_role = {}
+
+    rs.each do |row|
+      datname = row.fetch('datname')
+      datacl = row.fetch('datacl')
+      usename = row.fetch('usename')
+
+      next unless matched?(datname, @options[:include_database], @options[:exclude_database])
+
+      parse_database_aclitems(datacl, usename).each do |aclitem|
+        role = aclitem.fetch('grantee')
+        privs = aclitem.fetch('privileges')
+        next unless matched?(role, @options[:include_role], @options[:exclude_role])
+        grants_by_role[role] ||= {}
+        grants_by_role[role][datname] = privs
+      end
+    end
+
+    grants_by_role
+  end
+
   private
 
   def parse_aclitems(aclitems, owner, relkind)
     aclitems_fmt = DEFAULT_ACL_BY_KIND.fetch(relkind, DEFAULT_ACL)
     aclitems ||= aclitems_fmt % [owner, owner]
+    parse_aclitems0(aclitems)
+  end
+
+  def parse_database_aclitems(aclitems, owner)
+    aclitems ||= DEFAULT_DATABASE_ACL % [owner, owner]
+    parse_aclitems0(aclitems)
+  end
+
+  def parse_aclitems0(aclitems)
     aclitems = aclitems[1..-2].split(',')
 
     aclitems.map do |aclitem|
