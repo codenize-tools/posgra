@@ -28,9 +28,10 @@ Or install it yourself as:
 ```sh
 $ posgra help
 Commands:
-  posgra grant SUBCOMMAND  # Manage grants
-  posgra help [COMMAND]    # Describe available commands or one specific command
-  posgra role SUBCOMMAND   # Manage roles
+  posgra database SUBCOMMAND  # Manage database grants
+  posgra grant SUBCOMMAND     # Manage grants
+  posgra help [COMMAND]       # Describe available commands or one specific command
+  posgra role SUBCOMMAND      # Manage roles
 
 Options:
   -h, [--host=HOST]
@@ -60,6 +61,13 @@ posgra grant export pg_grants.rb
 vi pg_grants.rb
 posgra grant apply --dry-run pg_grants.rb
 posgra grant apply pg_grants.rb
+```
+
+```sh
+posgra database export pg_dbgrants.rb
+vi pg_dbgrants.rb
+posgra database apply --dry-run pg_dbgrants.rb
+posgra database apply pg_dbgrants.rb
 ```
 
 ### for Redshift
@@ -102,6 +110,26 @@ role "bob" do
     on /^user/ do
       grant "SELECT"
     end
+  end
+end
+```
+
+### DB Grant
+
+```ruby
+role "alice" do
+  database "my_database" do
+    grant "CONNECT", :grantable => true
+    grant "CREATE"
+    grant "TEMPORARY"
+  end
+end
+
+role "bob" do
+  database "my_database" do
+    grant "CONNECT"
+    grant "CREATE"
+    grant "TEMPORARY"
   end
 end
 ```
