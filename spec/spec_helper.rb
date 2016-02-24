@@ -67,6 +67,20 @@ module SpecHelper
     end
   end
 
+  def apply_databases(options = {})
+    tempfile(yield) do |f|
+      run_client(options) do |client|
+        client.apply_databases(f.path)
+      end
+    end
+  end
+
+  def export_databases(options = {})
+    run_client(options) do |client|
+      client.export_databases
+    end
+  end
+
   def run_client(options = {})
     options = {
       host: DBHOST,
