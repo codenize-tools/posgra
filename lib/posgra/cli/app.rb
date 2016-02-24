@@ -13,4 +13,7 @@ class Posgra::CLI::App < Thor
 
   desc 'grant SUBCOMMAND', 'Manage grants'
   subcommand :grant, Posgra::CLI::Grant
+
+  desc 'database SUBCOMMAND', 'Manage database grants'
+  subcommand :database, Posgra::CLI::Database
 end

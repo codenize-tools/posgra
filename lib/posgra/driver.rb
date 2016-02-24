@@ -332,7 +332,7 @@ class Posgra::Driver
         INNER JOIN pg_user ON pg_database.datdba = pg_user.usesysid
     SQL
 
-    grants_by_role = {}
+    database_grants_by_role = {}
 
     rs.each do |row|
       datname = row.fetch('datname')
@@ -345,12 +345,12 @@ class Posgra::Driver
         role = aclitem.fetch('grantee')
         privs = aclitem.fetch('privileges')
         next unless matched?(role, @options[:include_role], @options[:exclude_role])
-        grants_by_role[role] ||= {}
-        grants_by_role[role][datname] = privs
+        database_grants_by_role[role] ||= {}
+        database_grants_by_role[role][datname] = privs
       end
     end
 
-    grants_by_role
+    database_grants_by_role
   end
 
   private

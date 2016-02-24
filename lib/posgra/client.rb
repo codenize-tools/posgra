@@ -1,6 +1,7 @@
 class Posgra::Client
   DEFAULT_EXCLUDE_SCHEMA = /\A(?:pg_.*|information_schema)\z/
   DEFAULT_EXCLUDE_ROLE = /\A\z/
+  DEFAULT_EXCLUDE_DATABASE = /\A(?:template\d+|postgres)\z/
 
   def initialize(options = {})
     if options[:exclude_schema]
@@ -21,6 +22,15 @@ class Posgra::Client
       options[:exclude_role] = DEFAULT_EXCLUDE_ROLE
     end
 
+    if options[:exclude_database]
+      options[:exclude_database] = Regexp.union(
+        options[:exclude_database],
+        DEFAULT_EXCLUDE_DATABASE
+      )
+    else
+      options[:exclude_database] = DEFAULT_EXCLUDE_DATABASE
+    end
+
     @options = options
     @client = connect(options)
     @driver = Posgra::Driver.new(@client, options)
@@ -39,7 +49,6 @@ class Posgra::Client
     if options[:split]
       dsl_h = Hash.new {|hash, key| hash[key] = {} }
 
-
       exported.each do |role, schemas|
         dsl = Posgra::DSL.convert_grants({role => schemas}, options)
         dsl_h[role] = dsl
@@ -48,6 +57,24 @@ class Posgra::Client
       dsl_h
     else
       Posgra::DSL.convert_grants(exported, options)
+    end
+  end
+
+  def export_databases(options = {})
+    options = @options.merge(options)
+    exported = Posgra::Exporter.export_databases(@driver, options)
+
+    if options[:split]
+      dsl_h = Hash.new {|hash, key| hash[key] = {} }
+
+      exported.each do |role, databases|
+        dsl = Posgra::DSL.convert_databases({role => databases}, options)
+        dsl_h[role] = dsl
+      end
+
+      dsl_h
+    else
+      Posgra::DSL.convert_databases(exported, options)
     end
   end
 
