@@ -12,12 +12,12 @@ class Posgra::CLI::Database < Thor
   desc 'apply FILE', 'Apply database grants'
   option :'dry-run', :type => :boolean, :default => false
   def apply(file)
-    #check_fileanem(file)
-    #updated = client.apply_grants(file)
+    check_fileanem(file)
+    updated = client.apply_databases(file)
 
-    #unless updated
-    #  Posgra::Logger.instance.info('No change'.intense_blue)
-    #end
+    unless updated
+      Posgra::Logger.instance.info('No change'.intense_blue)
+    end
   end
 
   desc 'export [FILE]', 'Export database grants'

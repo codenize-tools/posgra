@@ -18,4 +18,8 @@ class Posgra::DSL
   def self.parse_grants(dsl, path, options = {})
     Posgra::DSL::Grants.eval(dsl, path, options).result
   end
+
+  def self.parse_databases(dsl, path, options = {})
+    Posgra::DSL::Database.eval(dsl, path, options).result
+  end
 end
