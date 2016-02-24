@@ -1,10 +1,14 @@
 class Posgra::Exporter
-  def self.export_roles(driver, options = {}, &block)
-    self.new(driver, options).export_roles(&block)
+  def self.export_roles(driver, options = {})
+    self.new(driver, options).export_roles
   end
 
-  def self.export_grants(driver, options = {}, &block)
-    self.new(driver, options).export_grants(&block)
+  def self.export_grants(driver, options = {})
+    self.new(driver, options).export_grants
+  end
+
+  def self.export_databases(driver, options = {})
+    self.new(driver, options).export_databases
   end
 
   def initialize(driver, options = {})
@@ -21,5 +25,9 @@ class Posgra::Exporter
 
   def export_grants
     @driver.describe_grants
+  end
+
+  def export_databases
+    @driver.describe_databases
   end
 end

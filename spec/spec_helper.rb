@@ -32,10 +32,10 @@ RSpec.configure do |config|
 end
 
 module SpecHelper
-  DBHOST = ENV['POSGRA_TEST_HOST'] || 'localhost'
+  DBHOST = ENV['POSGRA_TEST_HOST'] || '127.0.0.1'
   DBPORT = (ENV['POSGRA_TEST_PORT'] || 5432).to_i
-  DBUSER = ENV['POSGRA_TEST_USER'] || ENV['USER']
-  DBPASS = ENV['POSGRA_TEST_PASS']
+  DBUSER = ENV['POSGRA_TEST_USER'] || 'postgres'
+  DBPASS = ENV['POSGRA_TEST_PASS'] || 'password'
   DBNAME = 'posgra_test'
   DEFAULT_DBNAME = ENV['POSGRA_TEST_DEFAULT_DB'] || 'postgres'
 
@@ -64,6 +64,20 @@ module SpecHelper
   def export_grants(options = {})
     run_client(options) do |client|
       client.export_grants
+    end
+  end
+
+  def apply_databases(options = {})
+    tempfile(yield) do |f|
+      run_client(options) do |client|
+        client.apply_databases(f.path)
+      end
+    end
+  end
+
+  def export_databases(options = {})
+    run_client(options) do |client|
+      client.export_databases
     end
   end
 

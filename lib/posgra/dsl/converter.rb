@@ -7,6 +7,10 @@ class Posgra::DSL::Converter
     self.new(exported, options).convert_grants
   end
 
+  def self.convert_databases(exported, options = {})
+    self.new(exported, options).convert_databases
+  end
+
   def initialize(exported, options = {})
     @exported = exported
     @options = options
@@ -25,6 +29,11 @@ class Posgra::DSL::Converter
   def convert_grants
     grants_by_role = @exported || {}
     output_roles(grants_by_role).strip
+  end
+
+  def convert_databases
+    database_grants_by_role = @exported || {}
+    output_database_roles(database_grants_by_role).strip
   end
 
   private
@@ -117,10 +126,10 @@ end
     EOS
   end
 
-  def output_grants(grants)
+  def output_grants(grants, indent = "      ")
     grants.sort_by {|g| g.to_s }.map {|privilege_type, options|
       output_grant(privilege_type, options).strip
-    }.join("\n      ")
+    }.join("\n#{indent}")
   end
 
   def output_grant(privilege_type, options)
@@ -133,4 +142,45 @@ end
 
     out
   end
+
+  def output_database_roles(database_grants_by_role)
+    database_grants_by_role.sort_by {|r, _| r }.map {|role, grants_by_database|
+      output_database_role(role, grants_by_database)
+    }.join("\n")
+  end
+
+  def output_database_role(role, grants_by_database)
+    if grants_by_database.empty?
+      databases = "# no databases"
+    else
+      databases = output_databases(grants_by_database)
+    end
+
+    <<-EOS
+role #{role.inspect} do
+  #{databases}
+end
+    EOS
+  end
+
+  def output_databases(grants_by_database)
+    grants_by_database.sort_by {|s, _| s }.map {|database, grants|
+      output_database(database, grants).strip
+    }.join("\n  ")
+  end
+
+  def output_database(database, grants)
+    if grants.empty?
+      grants = "# no grants"
+    else
+      grants = output_grants(grants, '    ')
+    end
+
+    <<-EOS
+  database #{database.inspect} do
+    #{grants}
+  end
+    EOS
+  end
+
 end

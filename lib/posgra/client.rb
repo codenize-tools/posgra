@@ -1,6 +1,7 @@
 class Posgra::Client
   DEFAULT_EXCLUDE_SCHEMA = /\A(?:pg_.*|information_schema)\z/
   DEFAULT_EXCLUDE_ROLE = /\A\z/
+  DEFAULT_EXCLUDE_DATABASE = /\A(?:template\d+|postgres)\z/
 
   def initialize(options = {})
     if options[:exclude_schema]
@@ -21,6 +22,15 @@ class Posgra::Client
       options[:exclude_role] = DEFAULT_EXCLUDE_ROLE
     end
 
+    if options[:exclude_database]
+      options[:exclude_database] = Regexp.union(
+        options[:exclude_database],
+        DEFAULT_EXCLUDE_DATABASE
+      )
+    else
+      options[:exclude_database] = DEFAULT_EXCLUDE_DATABASE
+    end
+
     @options = options
     @client = connect(options)
     @driver = Posgra::Driver.new(@client, options)
@@ -39,7 +49,6 @@ class Posgra::Client
     if options[:split]
       dsl_h = Hash.new {|hash, key| hash[key] = {} }
 
-
       exported.each do |role, schemas|
         dsl = Posgra::DSL.convert_grants({role => schemas}, options)
         dsl_h[role] = dsl
@@ -51,6 +60,24 @@ class Posgra::Client
     end
   end
 
+  def export_databases(options = {})
+    options = @options.merge(options)
+    exported = Posgra::Exporter.export_databases(@driver, options)
+
+    if options[:split]
+      dsl_h = Hash.new {|hash, key| hash[key] = {} }
+
+      exported.each do |role, databases|
+        dsl = Posgra::DSL.convert_databases({role => databases}, options)
+        dsl_h[role] = dsl
+      end
+
+      dsl_h
+    else
+      Posgra::DSL.convert_databases(exported, options)
+    end
+  end
+
   def apply_roles(file, options = {})
     options = @options.merge(options)
     walk_for_roles(file, options)
@@ -59,6 +86,11 @@ class Posgra::Client
   def apply_grants(file, options = {})
     options = @options.merge(options)
     walk_for_grants(file, options)
+  end
+
+  def apply_databases(file, options = {})
+    options = @options.merge(options)
+    walk_for_database_grants(file, options)
   end
 
   def close
@@ -85,6 +117,12 @@ class Posgra::Client
     expected = load_file(file, :parse_grants, options)
     actual = Posgra::Exporter.export_grants(@driver, options)
     walk_roles(expected, actual)
+  end
+
+  def walk_for_database_grants(file, options)
+    expected = load_file(file, :parse_databases, options)
+    actual = Posgra::Exporter.export_databases(@driver, options)
+    walk_database_roles(expected, actual)
   end
 
   def walk_users(expected, actual)
@@ -214,6 +252,60 @@ class Posgra::Client
 
     actual.each do |actual_priv, _|
       updated = @driver.revoke(role, actual_priv, schema, object) || updated
+    end
+
+    updated
+  end
+
+  def walk_database_roles(expected, actual)
+    updated = false
+
+    expected.each do |expected_role, expected_databases|
+      actual_databases = actual.delete(expected_role) || {}
+      updated = walk_databases(expected_databases, actual_databases, expected_role) || updated
+    end
+
+    actual.each do |actual_role, actual_databases|
+      actual_databases.each do |database, _|
+        updated = @driver.revoke_all_on_database(actual_role, database) || updated
+      end
+    end
+
+    updated
+  end
+
+  def walk_databases(expected, actual, role)
+    updated = false
+
+    expected.each do |expected_database, expected_grants|
+      actual_grants = actual.delete(expected_database) || {}
+      updated = walk_database_grants(expected_grants, actual_grants, role, expected_database) || updated
+    end
+
+    actual.each do |actual_database, _|
+      updated = @driver.revoke_all_on_database(role, actual_database) || updated
+    end
+
+    updated
+  end
+
+  def walk_database_grants(expected, actual, role, database)
+    updated = false
+
+    expected.each do |expected_priv, expected_options|
+      actual_options = actual.delete(expected_priv)
+
+      if actual_options
+        if expected_options != actual_options
+          updated = @driver.update_database_grant_options(role, expected_priv, expected_options, database) || updated
+        end
+      else
+        updated = @driver.database_grant(role, expected_priv, expected_options, database) || updated
+      end
+    end
+
+    actual.each do |actual_priv, _|
+      updated = @driver.database_revoke(role, actual_priv, database) || updated
     end
 
     updated

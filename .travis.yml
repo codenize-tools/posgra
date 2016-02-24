@@ -1,19 +1,24 @@
-sudo: false
+dist: trusty
+sudo: required
 language: ruby
 rvm:
   - 2.0.0
   - 2.1.8
   - 2.2.4
   - 2.3.0
-before_install: gem install bundler -v 1.11.2
-script:
-  - bundle install
-  - bundle exec rake
-addons:
-  postgresql: "9.4"
-  apt:
-    packages:
-      - libgmp-dev
+before_install:
+  - gem install bundler
+  - sudo service postgresql stop
+before_script:
+  - docker-compose up -d
+  - function pg_ping { PGPASSWORD=password pg_isready -U postgres -h 127.0.0.1 > /dev/null 2> /dev/null; }
+  - for i in {1..60}; do pg_ping && break; sleep 1; done
 env:
   global:
     - POSGRA_TEST_USER=postgres
+services:
+  - docker
+addons:
+  apt:
+    packages:
+    - postgresql-client-9.4
