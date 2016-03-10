@@ -1,4 +1,6 @@
 class Posgra::Client
+  include Posgra::Utils::Helper
+
   DEFAULT_EXCLUDE_SCHEMA = /\A(?:pg_.*|information_schema)\z/
   DEFAULT_EXCLUDE_ROLE = /\A\z/
   DEFAULT_EXCLUDE_DATABASE = /\A(?:template\d+|postgres)\z/
@@ -144,8 +146,14 @@ class Posgra::Client
 
     actual.reject {|group, _|
       expected.has_key?(group)
-    }.each {|group, _|
-      updated = @driver.drop_group(group) || updated
+    }.each {|group, actual_users|
+      if matched?(group, @options[:include_role], @options[:exclude_role])
+        updated = @driver.drop_group(group) || updated
+      else
+        actual_users.each do |user|
+          updated = @driver.drop_user_from_group(user, group) || updated
+        end
+      end
     }
 
     updated
@@ -167,9 +175,7 @@ class Posgra::Client
       end
 
       (actual_users - expected_users).each do |user|
-        if expected_users.include?(user)
-          updated = @driver.drop_user_from_group(user, expected_group) || updated
-        end
+        updated = @driver.drop_user_from_group(user, expected_group) || updated
       end
     end
 
