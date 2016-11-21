@@ -9,7 +9,7 @@ class Posgra::CLI::Role < Thor
   desc 'apply FILE', 'Apply roles'
   option :'dry-run', :type => :boolean, :default => false
   def apply(file)
-    check_fileanem(file)
+    check_filename(file)
     updated = client.apply_roles(file)
 
     unless updated
@@ -19,7 +19,7 @@ class Posgra::CLI::Role < Thor
 
   desc 'export [FILE]', 'Export roles'
   def export(file = nil)
-    check_fileanem(file)
+    check_filename(file)
     dsl = client.export_roles
 
     if file.nil? or file == '-'
