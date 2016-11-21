@@ -5,14 +5,14 @@ class Posgra::Identifier::Auto
   end
 
   def identify(user)
-    password = mkpasswd
+    password = mkpasswd(@options[:password_length] || 8)
     puts_password(user, password)
     password
   end
 
   private
 
-  def mkpasswd(len = 8)
+  def mkpasswd(len)
     sources = [
       (1..9).to_a,
       ('A'..'Z').to_a,
