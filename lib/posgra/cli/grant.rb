@@ -14,7 +14,7 @@ class Posgra::CLI::Grant < Thor
   desc 'apply FILE', 'Apply grants'
   option :'dry-run', :type => :boolean, :default => false
   def apply(file)
-    check_fileanem(file)
+    check_filename(file)
     updated = client.apply_grants(file)
 
     unless updated
@@ -25,7 +25,7 @@ class Posgra::CLI::Grant < Thor
   desc 'export [FILE]', 'Export grants'
   option :split, :type => :boolean, :default => false
   def export(file = nil)
-    check_fileanem(file)
+    check_filename(file)
     dsl = client.export_grants
 
     if options[:split]
