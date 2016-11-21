@@ -9,7 +9,7 @@ module Posgra::CLI::Helper
     :password_length
   ]
 
-  def check_fileanem(file)
+  def check_filename(file)
     if file =~ /\A-.+/
       raise "Invalid failname: #{file}"
     end

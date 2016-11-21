@@ -12,7 +12,7 @@ class Posgra::CLI::Database < Thor
   desc 'apply FILE', 'Apply database grants'
   option :'dry-run', :type => :boolean, :default => false
   def apply(file)
-    check_fileanem(file)
+    check_filename(file)
     updated = client.apply_databases(file)
 
     unless updated
@@ -23,7 +23,7 @@ class Posgra::CLI::Database < Thor
   desc 'export [FILE]', 'Export database grants'
   option :split, :type => :boolean, :default => false
   def export(file = nil)
-    check_fileanem(file)
+    check_filename(file)
     dsl = client.export_databases
 
     if options[:split]

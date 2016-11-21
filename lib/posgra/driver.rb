@@ -183,7 +183,7 @@ class Posgra::Driver
     if options.fetch('is_grantable')
       updated = grant_grant_option(role, priv, schema, object)
     else
-      updated = roveke_grant_option(role, priv, schema, object)
+      updated = revoke_grant_option(role, priv, schema, object)
     end
 
     updated
@@ -203,7 +203,7 @@ class Posgra::Driver
     updated
   end
 
-  def roveke_grant_option(role, priv, schema, object)
+  def revoke_grant_option(role, priv, schema, object)
     updated = false
 
     sql = "REVOKE GRANT OPTION FOR #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
@@ -256,7 +256,7 @@ class Posgra::Driver
     if options.fetch('is_grantable')
       updated = grant_database_grant_option(role, priv, database)
     else
-      updated = roveke_database_grant_option(role, priv, database)
+      updated = revoke_database_grant_option(role, priv, database)
     end
 
     updated
@@ -276,7 +276,7 @@ class Posgra::Driver
     updated
   end
 
-  def roveke_database_grant_option(role, priv, database)
+  def revoke_database_grant_option(role, priv, database)
     updated = false
 
     sql = "REVOKE GRANT OPTION FOR #{priv} ON DATABASE #{@client.escape_identifier(database)} FROM #{@client.escape_identifier(role)}"
