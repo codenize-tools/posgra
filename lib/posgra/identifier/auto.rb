@@ -9,7 +9,8 @@ class Posgra::Identifier::Auto
   end
 
   def identify(user)
-    password = @accounts.fetch(user, mkpasswd(@options[:password_length] || 8))
+    password_length = [@options[:password_length].to_i, 8].max
+    password = @accounts.fetch(user, mkpasswd(password_length))
     puts_password(user, password)
     password
   end

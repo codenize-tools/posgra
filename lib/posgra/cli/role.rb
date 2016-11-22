@@ -4,6 +4,7 @@ class Posgra::CLI::Role < Thor
 
   class_option :'include-role'
   class_option :'exclude-role'
+  class_option :'password-length'
 
   desc 'apply FILE', 'Apply roles'
   option :'dry-run', :type => :boolean, :default => false

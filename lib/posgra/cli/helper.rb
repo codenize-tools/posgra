@@ -6,7 +6,6 @@ module Posgra::CLI::Helper
     :exclude_role,
     :include_object,
     :exclude_object,
-    :password_length
   ]
 
   def check_fileanem(file)
