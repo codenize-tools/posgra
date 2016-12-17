@@ -65,7 +65,7 @@ describe 'grants' do
         end
       ).to be_falsey
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -131,7 +131,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "alice" do
           schema "master" do
             on "users" do
@@ -190,7 +190,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -231,7 +231,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -279,7 +279,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -336,7 +336,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "alice" do
           schema "master" do
             on "users" do

@@ -26,7 +26,7 @@ describe 'template' do
           end
         ).to be_truthy
 
-        is_expected.to eq <<-RUBY.unindent.chomp
+        is_expected.to match_fuzzy <<-RUBY
           user "alice"
 
           group "staff" do
@@ -89,7 +89,7 @@ describe 'template' do
           end
         ).to be_truthy
 
-        is_expected.to eq <<-RUBY.unindent.chomp
+        is_expected.to match_fuzzy <<-RUBY
           role "bob" do
             schema "main" do
               on "microposts" do

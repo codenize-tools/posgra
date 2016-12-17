@@ -27,7 +27,7 @@ describe 'roles (delete)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         group "staff" do
           user "bob"
         end
@@ -46,7 +46,7 @@ describe 'roles (delete)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         user "alice"
 
         group "staff" do
@@ -67,7 +67,7 @@ describe 'roles (delete)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         user "alice"
         user "bob"
       RUBY

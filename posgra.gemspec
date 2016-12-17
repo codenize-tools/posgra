@@ -28,6 +28,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'coveralls'
-  spec.add_development_dependency 'unindent'
   spec.add_development_dependency 'timecop'
+  spec.add_development_dependency 'rspec-match_fuzzy'
 end

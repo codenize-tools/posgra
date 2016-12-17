@@ -65,7 +65,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -84,7 +84,7 @@ describe 'grants' do
         end
       RUBY
 
-      expect(export_grants(include_object: include_object)).to eq <<-RUBY.unindent.chomp
+      expect(export_grants(include_object: include_object)).to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -127,7 +127,7 @@ describe 'grants' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -146,7 +146,7 @@ describe 'grants' do
         end
       RUBY
 
-      expect(export_grants(exclude_object: exclude_object)).to eq <<-RUBY.unindent.chomp
+      expect(export_grants(exclude_object: exclude_object)).to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do

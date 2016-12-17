@@ -24,7 +24,7 @@ describe 'roles (create)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         user "alice"
         user "bob"
       RUBY
@@ -42,7 +42,7 @@ describe 'roles (create)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         group "engineer" do
           # no users
         end
@@ -71,7 +71,7 @@ describe 'roles (create)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         group "engineer" do
           user "bob"
         end
@@ -98,7 +98,7 @@ describe 'roles (create)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         user "alice"
 
         group "staff" do
