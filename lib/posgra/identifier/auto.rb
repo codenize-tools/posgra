@@ -5,7 +5,7 @@ class Posgra::Identifier::Auto
   end
 
   def identify(user)
-    password = mkpasswd([@options[:password_length].to_i, 8].max)
+    password = mkpasswd((@options[:password_length] || 8).to_i)
     puts_password(user, password)
     password
   end
