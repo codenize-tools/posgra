@@ -49,6 +49,13 @@ Options:
       [--debug], [--no-debug]
 ```
 
+A default connection to a database can be established by setting the following environment variables:
+- `POSGRA_DB_HOST`: database host
+- `POSGRA_DB_PORT`: database port
+- `POSGRA_DB_DATABASE`: database database name
+- `POSGRA_DB_USER`: database user
+- `POSGRA_DB_PASSWORD`: database password
+
 ```sh
 posgra role export pg_roles.rb
 vi pg_roles.rb
