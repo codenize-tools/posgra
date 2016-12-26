@@ -73,7 +73,7 @@ describe 'grants' do
         ).to be_truthy
       end
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts_id_seq" do

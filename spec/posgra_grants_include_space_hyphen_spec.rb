@@ -145,7 +145,7 @@ describe 'grants (include space/hyphen)' do
         end
       ).to be_falsey
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do
@@ -301,7 +301,7 @@ describe 'grants (include space/hyphen)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "alice alice" do
           schema "main" do
             on "microposts" do
@@ -421,7 +421,7 @@ describe 'grants (include space/hyphen)' do
         end
       ).to be_truthy
 
-      is_expected.to eq <<-RUBY.unindent.chomp
+      is_expected.to match_fuzzy <<-RUBY
         role "bob" do
           schema "main" do
             on "microposts" do

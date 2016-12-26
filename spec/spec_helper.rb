@@ -14,8 +14,8 @@ end
 
 require 'posgra'
 require 'tempfile'
-require 'unindent'
 require 'timecop'
+require 'rspec/match_fuzzy'
 
 RSpec.configure do |config|
   config.before(:all) do
