@@ -69,12 +69,13 @@ class Posgra::Driver
   def create_group(group)
     updated = false
 
-    sql = "CREATE GROUP #{escape(group)}"
+    sql = "CREATE GROUP #{escape(group, true)}"
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
       exec(sql)
       updated = true
+      @groups = describe_groups.keys
     end
 
     updated
@@ -83,7 +84,7 @@ class Posgra::Driver
   def add_user_to_group(user, group)
     updated = false
 
-    sql = "ALTER GROUP #{escape(group)} ADD USER #{escape(user)}"
+    sql = "ALTER GROUP #{escape(group, true)} ADD USER #{escape(user)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -97,7 +98,7 @@ class Posgra::Driver
   def drop_user_from_group(user, group)
     updated = false
 
-    sql = "ALTER GROUP #{escape(group)} DROP USER #{escape(user)}"
+    sql = "ALTER GROUP #{escape(group, true)} DROP USER #{escape(user)}"
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
@@ -111,12 +112,13 @@ class Posgra::Driver
   def drop_group(group)
     updated = false
 
-    sql = "DROP GROUP #{escape(group)}"
+    sql = "DROP GROUP #{escape(group, true)}"
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
       exec(sql)
       updated = true
+      @groups = describe_groups.keys
     end
 
     updated
@@ -440,9 +442,9 @@ class Posgra::Driver
 
   private
 
-  def escape(src)
+  def escape(src, skip_group_command=false)
     @groups ||= describe_groups.keys
-    if @groups.include?(src)
+    if @groups.include?(src) && !skip_group_command
       group_name = @client.escape_identifier(src.gsub('group:', ''))
       "GROUP #{group_name}"
     else
