@@ -130,7 +130,7 @@ module SpecHelper
 
   def pg(dbname = DBNAME)
     begin
-      conn = PGconn.connect(
+      conn = PG::Connection.connect(
         host: DBHOST,
         port: DBPORT,
         user: DBUSER,
