@@ -342,6 +342,6 @@ class Posgra::Client
       end
     end
 
-    PGconn.connect(connect_options)
+    PG::Connection.connect(connect_options)
   end
 end
