@@ -18,7 +18,7 @@ class Posgra::Exporter
 
   def export_roles
     {
-      :users => @driver.describe_users.keys,
+      :users => @driver.describe_users,
       :users_by_group => @driver.describe_groups,
     }
   end

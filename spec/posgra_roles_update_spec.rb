@@ -6,7 +6,7 @@ describe 'roles (update)' do
   before do
     apply_roles do
       <<-RUBY
-        user "alice"
+        user "alice", :connection_limit => 100, :superuser => true, :valid_until => "2018-01-01"
 
         group "staff" do
           user "bob"
@@ -42,14 +42,14 @@ describe 'roles (update)' do
       expect(
         apply_roles do
           <<-RUBY
-            user "alice"
+            user "alice", :connection_limit => 100, :superuser => true, :valid_until => "2018-01-01"
             user "bob"
           RUBY
         end
       ).to be_truthy
 
       is_expected.to match_fuzzy <<-RUBY
-        user "alice"
+        user "alice", :connection_limit => 100, :superuser => true, :valid_until => "2018-01-01 00:00:00+00"
         user "bob"
       RUBY
     end
@@ -60,7 +60,7 @@ describe 'roles (update)' do
       expect(
         apply_roles do
           <<-RUBY
-            user "alice"
+            user "alice", :connection_limit => 100, :superuser => true, :valid_until => "2018-01-01"
             user "bob"
             user "staff"
           RUBY
@@ -68,7 +68,7 @@ describe 'roles (update)' do
       ).to be_truthy
 
       is_expected.to match_fuzzy <<-RUBY
-        user "alice"
+        user "alice", :connection_limit => 100, :superuser => true, :valid_until => "2018-01-01 00:00:00+00"
         user "bob"
         user "staff"
       RUBY
@@ -93,6 +93,30 @@ describe 'roles (update)' do
         group "alice" do
           # no users
         end
+
+        group "staff" do
+          user "bob"
+        end
+      RUBY
+    end
+  end
+
+  context 'when change role attributes' do
+    it do
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice", :createdb => true
+
+            group "staff" do
+              user "bob"
+            end
+          RUBY
+        end
+      ).to be_truthy
+
+      is_expected.to match_fuzzy <<-RUBY
+        user "alice", :createdb => true
 
         group "staff" do
           user "bob"

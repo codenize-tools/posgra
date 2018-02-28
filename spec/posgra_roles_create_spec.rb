@@ -31,6 +31,24 @@ describe 'roles (create)' do
     end
   end
 
+  context 'when create user with role attributes' do
+    it do
+      expect(
+        apply_roles do
+          <<-RUBY
+            user "alice", :superuser => true
+            user "bob", :connection_limit => 100, :createdb => true, :createrole => true, :inherit => true, :replication => true, :valid_until => "2018-01-01"
+          RUBY
+        end
+      ).to be_truthy
+
+      is_expected.to match_fuzzy <<-RUBY
+        user "alice", :superuser => true
+        user "bob", :connection_limit => 100, :createdb => true, :createrole => true, :replication => true, :valid_until => "2018-01-01 00:00:00+00"
+      RUBY
+    end
+  end
+
   context 'when create group only' do
     it do
       expect(

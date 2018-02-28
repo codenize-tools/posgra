@@ -10,8 +10,6 @@ class Posgra::DSL::Roles
   end
 
   def result
-    @result[:users].uniq!
-
     group_users = @result[:users_by_group].flat_map do |group, users|
       if users.empty?
         [group, nil]
@@ -38,7 +36,7 @@ class Posgra::DSL::Roles
     @path = path
     @options = options
     @result = {
-      :users => [],
+      :users => {},
       :users_by_group => {},
     }
 
@@ -69,11 +67,11 @@ class Posgra::DSL::Roles
     end
   end
 
-  def user(name, &block)
+  def user(name, options = {}, &block)
     name = name.to_s
 
     if matched?(name, @options[:include_role], @options[:exclude_role])
-      @result[:users] << name
+      @result[:users][name] = options
     end
   end
 

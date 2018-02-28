@@ -107,12 +107,15 @@ class Posgra::Client
 
     expected_users_by_group = expected.fetch(:users_by_group)
     actual_users_by_group = actual.fetch(:users_by_group)
-    expected_users = (expected_users_by_group.values.flatten + expected.fetch(:users)).uniq
-    actual_users = (actual_users_by_group.values.flatten + actual.fetch(:users)).uniq
+
+    expected_users = expected.fetch(:users)
+    expected_users_by_group.values.flatten.each { |u| expected_users[u] ||= {} }
+    actual_users = actual.fetch(:users)
+    actual_users_by_group.values.flatten.each { |u| actual_users[u] ||= {} }
 
     updated = pre_walk_groups(expected_users_by_group, actual_users_by_group)
     updated = walk_users(expected_users, actual_users) || updated
-    walk_groups(expected_users_by_group, actual_users_by_group, expected_users) || updated
+    walk_groups(expected_users_by_group, actual_users_by_group, expected_users.keys) || updated
   end
 
   def walk_for_grants(file, options)
@@ -130,11 +133,16 @@ class Posgra::Client
   def walk_users(expected, actual)
     updated = false
 
-    (expected - actual).each do |user|
-      updated = @driver.create_user(user) || updated
+    expected.each do |user, expected_options|
+      actual_options = actual.delete(user)
+      if !actual_options
+        updated = @driver.create_user(user, expected[user]) || updated
+      elsif expected_options != actual_options
+        updated = @driver.alter_user(user, diff_options(expected_options, actual_options)) || updated
+      end
     end
 
-    (actual - expected).each do |user|
+    actual.each_key do |user|
       updated = @driver.drop_user(user) || updated
     end
 
@@ -343,5 +351,11 @@ class Posgra::Client
     end
 
     PG::Connection.connect(connect_options)
+  end
+
+  def diff_options(expected, actual)
+    expected.reject {|k, v| actual[k] == v }.tap do |diff|
+      actual.each_key {|k| diff[k] = nil unless expected.key?(k) }
+    end
   end
 end

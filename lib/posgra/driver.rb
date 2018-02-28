@@ -27,6 +27,49 @@ class Posgra::Driver
     'T' => 'TEMPORARY',
   }
 
+  ROLE_ATTRIBUTES = {
+    'rolbypassrls' => {
+      name: :bypassrls,
+      default: [false],
+      type: :boolean,
+    },
+    'rolconnlimit' => {
+      name: :connection_limit,
+      default: [-1],
+      type: :integer,
+    },
+    'rolcreatedb' => {
+      name: :createdb,
+      default: [false],
+      type: :boolean,
+    },
+    'rolcreaterole' => {
+      name: :createrole,
+      default: [false],
+      type: :boolean,
+    },
+    'rolinherit' => {
+      name: :inherit,
+      default: [true],
+      type: :boolean
+    },
+    'rolreplication' => {
+      name: :replication,
+      default: [false],
+      type: :boolean,
+    },
+    'rolsuper' => {
+      name: :superuser,
+      default: [false],
+      type: :boolean,
+    },
+    'rolvaliduntil' => {
+      name: :valid_until,
+      default: ['infinity', nil],
+      type: :timestamptz,
+    },
+  }
+
   def initialize(client, options = {})
     unless client.type_map_for_results.is_a?(PG::TypeMapAllStrings)
       raise 'PG::Connection#type_map_for_results must be PG::TypeMapAllStrings'
@@ -37,11 +80,27 @@ class Posgra::Driver
     @identifier = options.fetch(:identifier)
   end
 
-  def create_user(user)
+  def create_user(user, options)
     updated = false
 
     password =  @identifier.identify(user)
     sql = "CREATE USER #{@client.escape_identifier(user)} PASSWORD #{@client.escape_literal(password)}"
+    sql << role_attributes_to_sql(options)
+    log(:info, sql, :color => :cyan)
+
+    unless @options[:dry_run]
+      exec(sql)
+      updated = true
+    end
+
+    updated
+  end
+
+  def alter_user(user, options)
+    updated = false
+
+    sql = "ALTER USER #{@client.escape_identifier(user)}"
+    sql << role_attributes_to_sql(options)
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
@@ -329,14 +388,15 @@ class Posgra::Driver
   end
 
   def describe_users
-    rs = exec('SELECT * FROM pg_user')
+    rs = exec('SELECT * FROM pg_roles WHERE pg_roles.rolcanlogin')
 
     options_by_user = {}
 
     rs.each do |row|
-      user = row.fetch('usename')
+      user = row.fetch('rolname')
       next unless matched?(user, @options[:include_role], @options[:exclude_role])
-      options_by_user[user] = row.select {|_, v| v == 't' }.keys
+      attrs = ROLE_ATTRIBUTES.select {|c, a| row.key?(c) && !a[:default].include?(cast_role_attribute(row[c], a[:type]))}
+      options_by_user[user] = Hash[attrs.map {|c, a| [a[:name], cast_role_attribute(row[c], a[:type])] }]
     end
 
     options_by_user
@@ -486,6 +546,46 @@ class Posgra::Driver
     end
 
     options_by_privilege
+  end
+
+  def role_attributes_to_sql(options)
+    sql = ''
+    ROLE_ATTRIBUTES.each_value do |attr|
+      next unless options.key?(attr[:name])
+      name = attr[:name].to_s.upcase.tr('_', ' ')
+      value = options[attr[:name]]
+      value = attr[:default][0] if value.nil?
+      sql << role_attribute_to_sql(name, value, attr[:type])
+    end
+    sql
+  end
+
+  def role_attribute_to_sql(name, value, type)
+    case type
+    when :boolean
+      " #{value ? '' : 'NO'}#{name}"
+    when :integer
+      " #{name} #{value}"
+    when :timestamptz
+      value = Time.parse(value).to_s unless value == 'infinity'
+      " #{name} #{@client.escape_literal(value)}"
+    else
+      raise "Unknown role attribute type: #{type}"
+    end
+  end
+
+  def cast_role_attribute(value, type)
+    return nil if value.nil?
+    case type
+    when :boolean
+      value == 't'
+    when :integer
+      value.to_i
+    when :timestamptz
+      value
+    else
+      raise "Unknown role attribute type: #{type}"
+    end
   end
 
   def exec(sql)

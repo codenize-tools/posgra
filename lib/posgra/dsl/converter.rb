@@ -18,7 +18,8 @@ class Posgra::DSL::Converter
 
   def convert_roles
     users_by_group = @exported[:users_by_group] || {}
-    users = @exported.fetch(:users, []) - users_by_group.values.flatten
+    users_in_group = users_by_group.values.flatten
+    users = @exported.fetch(:users, {}).reject {|u, o| o.empty? && users_in_group.include?(u) }
 
     [
       output_users(users),
@@ -39,9 +40,22 @@ class Posgra::DSL::Converter
   private
 
   def output_users(users)
-    users.sort.map {|user|
-      "user #{user.inspect}"
+    users.sort.map {|user, options|
+      output_user(user, options)
     }.join("\n") + "\n"
+  end
+
+  def output_user(user, options)
+    "user #{user.inspect}#{output_user_options(options)}"
+  end
+
+  def output_user_options(options)
+    if options.empty?
+      ''
+    else
+      options = strip_hash_brace(options.inspect)
+      ", #{options}"
+    end
   end
 
   def output_groups(users_by_group)
@@ -183,4 +197,7 @@ end
     EOS
   end
 
+  def strip_hash_brace(hash_str)
+    hash_str.sub(/\A\{/, '').sub(/\}\z/, '')
+  end
 end
