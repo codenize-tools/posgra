@@ -1,16 +1,29 @@
+require 'csv'
+
 class Posgra::Identifier::Auto
   def initialize(output, options = {})
     @output = output
     @options = options
+    @accounts = {}
+    read_accounts
   end
 
   def identify(user)
-    password = mkpasswd((@options[:password_length] || 8).to_i)
+    password_length = [@options[:password_length].to_i, 8].max
+    password = @accounts.fetch(user, mkpasswd(password_length))
     puts_password(user, password)
     password
   end
 
   private
+
+  def read_accounts
+    return unless File.file?(@output)
+
+    CSV.foreach(@output, {encoding: "UTF-8", headers: false}) do |row|
+      @accounts[row[0]] = row[1]
+    end
+  end
 
   def mkpasswd(len)
     sources = [
@@ -30,6 +43,7 @@ class Posgra::Identifier::Auto
   end
 
   def puts_password(user, password)
+    @accounts[user] = password
     open_output do |f|
       f.puts("#{user},#{password}")
     end

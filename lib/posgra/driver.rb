@@ -41,7 +41,7 @@ class Posgra::Driver
     updated = false
 
     password =  @identifier.identify(user)
-    sql = "CREATE USER #{@client.escape_identifier(user)} PASSWORD #{@client.escape_literal(password)}"
+    sql = "CREATE USER #{escape(user)} PASSWORD #{@client.escape_literal(password)}"
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
@@ -55,7 +55,7 @@ class Posgra::Driver
   def drop_user(user)
     updated = false
 
-    sql = "DROP USER #{@client.escape_identifier(user)}"
+    sql = "DROP USER #{escape(user)}"
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
@@ -69,12 +69,13 @@ class Posgra::Driver
   def create_group(group)
     updated = false
 
-    sql = "CREATE GROUP #{@client.escape_identifier(group)}"
+    sql = "CREATE GROUP #{escape(group, true)}"
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
       exec(sql)
       updated = true
+      @groups = describe_groups.keys
     end
 
     updated
@@ -83,7 +84,7 @@ class Posgra::Driver
   def add_user_to_group(user, group)
     updated = false
 
-    sql = "ALTER GROUP #{@client.escape_identifier(group)} ADD USER #{@client.escape_identifier(user)}"
+    sql = "ALTER GROUP #{escape(group, true)} ADD USER #{escape(user)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -97,7 +98,7 @@ class Posgra::Driver
   def drop_user_from_group(user, group)
     updated = false
 
-    sql = "ALTER GROUP #{@client.escape_identifier(group)} DROP USER #{@client.escape_identifier(user)}"
+    sql = "ALTER GROUP #{escape(group, true)} DROP USER #{escape(user)}"
     log(:info, sql, :color => :cyan)
 
     unless @options[:dry_run]
@@ -111,12 +112,13 @@ class Posgra::Driver
   def drop_group(group)
     updated = false
 
-    sql = "DROP GROUP #{@client.escape_identifier(group)}"
+    sql = "DROP GROUP #{escape(group, true)}"
     log(:info, sql, :color => :red)
 
     unless @options[:dry_run]
       exec(sql)
       updated = true
+      @groups = describe_groups.keys
     end
 
     updated
@@ -135,7 +137,7 @@ class Posgra::Driver
   def revoke_all_on_object(role, schema, object)
     updated = false
 
-    sql = "REVOKE ALL ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE ALL ON #{escape(schema)}.#{escape(object)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -147,7 +149,7 @@ class Posgra::Driver
   end
 
   def revoke_all_on_database(role, database)
-    sql = "REVOKE ALL ON DATABASE #{@client.escape_identifier(database)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE ALL ON DATABASE #{escape(database)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -161,7 +163,7 @@ class Posgra::Driver
   def grant(role, priv, options, schema, object)
     updated = false
 
-    sql = "GRANT #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} TO #{@client.escape_identifier(role)}"
+    sql = "GRANT #{priv} ON #{escape(schema)}.#{escape(object)} TO #{escape(role)}"
 
     if options['is_grantable']
       sql << ' WITH GRANT OPTION'
@@ -183,7 +185,7 @@ class Posgra::Driver
     if options.fetch('is_grantable')
       updated = grant_grant_option(role, priv, schema, object)
     else
-      updated = roveke_grant_option(role, priv, schema, object)
+      updated = revoke_grant_option(role, priv, schema, object)
     end
 
     updated
@@ -192,7 +194,7 @@ class Posgra::Driver
   def grant_grant_option(role, priv, schema, object)
     updated = false
 
-    sql = "GRANT #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} TO #{@client.escape_identifier(role)} WITH GRANT OPTION"
+    sql = "GRANT #{priv} ON #{escape(schema)}.#{escape(object)} TO #{escape(role)} WITH GRANT OPTION"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -203,10 +205,10 @@ class Posgra::Driver
     updated
   end
 
-  def roveke_grant_option(role, priv, schema, object)
+  def revoke_grant_option(role, priv, schema, object)
     updated = false
 
-    sql = "REVOKE GRANT OPTION FOR #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE GRANT OPTION FOR #{priv} ON #{escape(schema)}.#{escape(object)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -220,7 +222,7 @@ class Posgra::Driver
   def revoke(role, priv, schema, object)
     updated = false
 
-    sql = "REVOKE #{priv} ON #{@client.escape_identifier(schema)}.#{@client.escape_identifier(object)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE #{priv} ON #{escape(schema)}.#{escape(object)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -234,7 +236,7 @@ class Posgra::Driver
   def database_grant(role, priv, options, database)
     updated = false
 
-    sql = "GRANT #{priv} ON DATABASE #{@client.escape_identifier(database)} TO #{@client.escape_identifier(role)}"
+    sql = "GRANT #{priv} ON DATABASE #{escape(database)} TO #{escape(role)}"
 
     if options['is_grantable']
       sql << ' WITH GRANT OPTION'
@@ -256,7 +258,7 @@ class Posgra::Driver
     if options.fetch('is_grantable')
       updated = grant_database_grant_option(role, priv, database)
     else
-      updated = roveke_database_grant_option(role, priv, database)
+      updated = revoke_database_grant_option(role, priv, database)
     end
 
     updated
@@ -265,7 +267,7 @@ class Posgra::Driver
   def grant_database_grant_option(role, priv, database)
     updated = false
 
-    sql = "GRANT #{priv} ON DATABASE #{@client.escape_identifier(database)} TO #{@client.escape_identifier(role)} WITH GRANT OPTION"
+    sql = "GRANT #{priv} ON DATABASE #{escape(database)} TO #{escape(role)} WITH GRANT OPTION"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -276,10 +278,10 @@ class Posgra::Driver
     updated
   end
 
-  def roveke_database_grant_option(role, priv, database)
+  def revoke_database_grant_option(role, priv, database)
     updated = false
 
-    sql = "REVOKE GRANT OPTION FOR #{priv} ON DATABASE #{@client.escape_identifier(database)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE GRANT OPTION FOR #{priv} ON DATABASE #{escape(database)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -293,7 +295,7 @@ class Posgra::Driver
   def database_revoke(role, priv, database)
     updated = false
 
-    sql = "REVOKE #{priv} ON DATABASE #{@client.escape_identifier(database)} FROM #{@client.escape_identifier(role)}"
+    sql = "REVOKE #{priv} ON DATABASE #{escape(database)} FROM #{escape(role)}"
     log(:info, sql, :color => :green)
 
     unless @options[:dry_run]
@@ -439,6 +441,16 @@ class Posgra::Driver
   end
 
   private
+
+  def escape(src, skip_group_command=false)
+    @groups ||= describe_groups.keys
+    if @groups.include?(src) && !skip_group_command
+      group_name = @client.escape_identifier(src.gsub('group:', ''))
+      "GROUP #{group_name}"
+    else
+      @client.escape_identifier(src)
+    end
+  end
 
   def parse_aclitems(aclitems, owner, relkind)
     aclitems_fmt = DEFAULT_ACL_BY_KIND.fetch(relkind, DEFAULT_ACL)
